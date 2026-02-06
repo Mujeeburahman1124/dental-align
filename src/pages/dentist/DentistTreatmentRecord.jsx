@@ -130,6 +130,7 @@ const DentistTreatmentRecord = () => {
 
                 {!selectedPatient ? (
                     <div className="max-w-5xl mx-auto">
+                        <h1 className="text-3xl font-black text-gray-900 mb-6 tracking-tight">Digital Treatment Records</h1>
                         <div className="relative mb-8 group">
                             <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
                             <input
@@ -165,7 +166,7 @@ const DentistTreatmentRecord = () => {
                             <div className="flex items-center gap-6">
                                 <button onClick={() => setSelectedPatient(null)} className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-all">←</button>
                                 <div>
-                                    <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Investigation Profile</div>
+                                    <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Digital Treatment Record</div>
                                     <h2 className="text-2xl font-bold text-gray-900">{selectedPatient.fullName}</h2>
                                 </div>
                             </div>
