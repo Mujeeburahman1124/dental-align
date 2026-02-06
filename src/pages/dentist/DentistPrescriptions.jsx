@@ -43,7 +43,7 @@ const DentistPrescriptions = () => {
                             <span className="text-xl">📅</span>Dashboard
                         </Link>
                         <Link to="/dentist/records" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">📋</span>Patient Records
+                            <span className="text-xl">📋</span>Treatment Records
                         </Link>
                         <Link to="/dentist/prescriptions" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold bg-[#007AFF]/10 text-[#007AFF]">
                             <span className="text-xl">💊</span>Prescriptions
@@ -62,7 +62,7 @@ const DentistPrescriptions = () => {
                     <div className="max-w-5xl mx-auto">
                         <div className="flex justify-between items-center mb-10">
                             <div>
-                                <h1 className="text-3xl font-extrabold text-[#111827]">Partner Pharmacy & Prescriptions</h1>
+                                <h1 className="text-3xl font-extrabold text-[#111827]">Issue Prescriptions</h1>
                                 <p className="text-gray-400 font-bold mt-2">Manage patient medications and history</p>
                             </div>
                             <button
