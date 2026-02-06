@@ -65,7 +65,7 @@ const DentistCalendar = () => {
                             <span className="text-xl">📅</span>Dashboard
                         </Link>
                         <Link to="/dentist/records" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">📋</span>Patient Records
+                            <span className="text-xl">📋</span>Treatment Records
                         </Link>
                         <Link to="/dentist/prescriptions" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
                             <span className="text-xl">💊</span>Prescriptions
@@ -80,7 +80,7 @@ const DentistCalendar = () => {
                 </aside>
 
                 {/* Main Calendar Content */}
-                <main className="flex-1 p-12 bg-white overflow-y-auto">
+                <main className="flex-1 p-6 bg-white overflow-y-auto">
                     <div className="max-w-6xl mx-auto">
                         <div className="flex justify-between items-center mb-10">
                             <div>
@@ -112,7 +112,7 @@ const DentistCalendar = () => {
                                     const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
 
                                     return (
-                                        <div key={idx} className={`min-h-[140px] p-2 border-b border-r border-gray-50 hover:bg-white transition-colors relative group ${!day ? 'bg-gray-50/50' : ''}`}>
+                                        <div key={idx} className={`min-h-[80px] p-1 border-b border-r border-gray-50 hover:bg-white transition-colors relative group ${!day ? 'bg-gray-50/50' : ''}`}>
                                             {day && (
                                                 <>
                                                     <span className={`text-sm font-bold ${isToday ? 'text-white bg-[#007AFF] w-8 h-8 rounded-full flex items-center justify-center' : 'text-gray-400'}`}>

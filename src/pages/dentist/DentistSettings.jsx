@@ -39,7 +39,7 @@ const DentistSettings = () => {
                             <span className="text-xl">📅</span>Dashboard
                         </Link>
                         <Link to="/dentist/records" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">📋</span>Patient Records
+                            <span className="text-xl">📋</span>Treatment Records
                         </Link>
                         <Link to="/dentist/prescriptions" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
                             <span className="text-xl">💊</span>Prescriptions
