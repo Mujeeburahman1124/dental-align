@@ -348,7 +348,7 @@ This project is created as a student degree project for educational purposes.
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [Mujeeburahman1124](https://github.com/Mujeeburahman1124)
 - Email: your.email@example.com
 
 ---
