@@ -7,109 +7,132 @@ const HomePage = () => {
         <div className="min-h-screen bg-white font-inter">
             <Navbar />
 
-            {/* Hero Section */}
-            <section className="px-8 py-12 md:py-24 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
-                <div className="flex-1 space-y-8 text-center lg:text-left">
-                    <div className="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-widest shadow-sm">
-                        Premier Dental Care
+            {/* Hero Section - Compact */}
+            <section className="px-4 py-8 md:py-12 max-w-6xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-6 md:gap-8 items-center">
+                    <div className="space-y-4 text-center lg:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                            <span>✨</span> Premium Dental Care
+                        </div>
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 leading-tight">
+                            Your Perfect <span className="text-blue-600">Smile</span> Starts Here
+                        </h1>
+                        <p className="text-sm md:text-base text-gray-600">
+                            Modern dental care with advanced technology. Book appointments, track treatments, and manage your oral health.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                            <Link to="/register" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-all text-sm">
+                                Get Started
+                            </Link>
+                            <Link to="/login" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold hover:bg-gray-50 transition-all border-2 border-gray-200 text-sm">
+                                Sign In
+                            </Link>
+                        </div>
                     </div>
-                    <h1 className="text-5xl lg:text-6xl font-extrabold text-[#111827] leading-tight tracking-tighter">
-                        Your Smile, <br /> Our Clinical Excellence
-                    </h1>
-                    <p className="text-lg text-gray-500 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                        Experience precision dental care at DentAlign. Personalizing your treatment with advanced technology and expert professional staff.
+                    <div className="relative">
+                        <div className="aspect-square bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl overflow-hidden shadow-xl">
+                            <img
+                                src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=600"
+                                alt="Dental Care"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="absolute -bottom-3 -right-3 bg-white p-3 rounded-xl shadow-lg">
+                            <div className="text-2xl font-black text-blue-600">99%</div>
+                            <div className="text-xs font-bold text-gray-500">Satisfaction</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Stats - Compact */}
+            <section className="px-4 py-6 md:py-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { num: '5+', label: 'Years' },
+                        { num: '2.5k+', label: 'Patients' },
+                        { num: '24/7', label: 'Support' },
+                        { num: 'ISO', label: 'Certified' }
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-gray-50 p-4 rounded-xl text-center border border-gray-100">
+                            <div className="text-xl md:text-2xl font-black text-gray-900">{stat.num}</div>
+                            <div className="text-xs font-bold text-gray-500 mt-1">{stat.label}</div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Features - Compact */}
+            <section className="px-4 py-6 md:py-8 max-w-6xl mx-auto">
+                <h2 className="text-2xl md:text-3xl font-black text-center mb-6">Why Choose Us?</h2>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                        { icon: '🗓️', title: 'Easy Booking', desc: 'Schedule in seconds' },
+                        { icon: '📊', title: 'Digital Records', desc: 'Access anytime' },
+                        { icon: '💳', title: 'Secure Payments', desc: 'Safe transactions' }
+                    ].map((feature, i) => (
+                        <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 hover:shadow-lg transition-all">
+                            <div className="text-3xl mb-2">{feature.icon}</div>
+                            <h3 className="font-bold text-base mb-1">{feature.title}</h3>
+                            <p className="text-xs text-gray-600">{feature.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* About Us - Compact */}
+            <section id="about" className="px-4 py-8 md:py-12 bg-gradient-to-br from-blue-50 to-white">
+                <div className="max-w-6xl mx-auto">
+                    <h2 className="text-2xl md:text-3xl font-black mb-4 text-center">About DentAlign</h2>
+                    <p className="text-sm md:text-base text-gray-700 text-center max-w-3xl mx-auto mb-6">
+                        Modern dental management system combining cutting-edge technology with user-friendly design.
+                        From online booking to digital treatment records, every feature is built for your comfort.
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-                        <Link to="/register" className="w-full sm:w-auto bg-[#007AFF] text-white px-10 py-5 rounded-2xl text-md font-bold hover:bg-[#0066D6] transition-all shadow-[0_20px_40px_-15px_rgba(0,122,255,0.3)] hover:scale-105 active:scale-95">
-                            Book Visit Now
-                        </Link>
-                        <Link to="/login" className="w-full sm:w-auto bg-gray-50 text-[#111827] px-10 py-5 rounded-2xl text-md font-bold hover:bg-gray-100 transition-all border border-gray-100">
-                            Patient Login
-                        </Link>
-                    </div>
-                </div>
-                <div className="flex-1 relative w-full">
-                    <div className="w-full aspect-[4/3] bg-gray-50 rounded-[48px] overflow-hidden shadow-2xl relative">
-                        <img
-                            src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800"
-                            alt="Modern Dental Operatory"
-                            className="w-full h-full object-cover"
-                        />
-                        {/* Overlay Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                    </div>
-                    {/* Simplified Stat Badge */}
-                    <div className="absolute -bottom-6 -right-6 md:right-12 bg-white p-6 rounded-[32px] shadow-2xl border border-gray-50 flex items-center gap-4 animate-float">
-                        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                            <span className="text-xl">✨</span>
-                        </div>
-                        <div>
-                            <div className="text-2xl font-black text-[#111827]">99%</div>
-                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Successful <br /> Procedures</div>
-                        </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                            { icon: '👨‍⚕️', title: 'Expert Dentists' },
+                            { icon: '🏥', title: 'Modern Facility' },
+                            { icon: '⏰', title: 'Flexible Hours' },
+                            { icon: '💰', title: 'Clear Pricing' }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white p-4 rounded-xl shadow text-center">
+                                <div className="text-2xl mb-2">{item.icon}</div>
+                                <h4 className="font-bold text-sm">{item.title}</h4>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Core Stats - Single Clinic Focused */}
-            <section className="px-8 py-12 max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                <div className="bg-gray-50 p-6 md:p-8 rounded-[32px] border border-gray-100 text-center hover:bg-white transition-all hover:shadow-xl group">
-                    <div className="text-3xl font-black text-[#111827] mb-1 group-hover:text-blue-600">5+</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Years Experience</div>
-                </div>
-                <div className="bg-gray-50 p-6 md:p-8 rounded-[32px] border border-gray-100 text-center hover:bg-white transition-all hover:shadow-xl group">
-                    <div className="text-3xl font-black text-[#111827] mb-1 group-hover:text-blue-600">2.5k+</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Happy Patients</div>
-                </div>
-                <div className="bg-gray-50 p-6 md:p-8 rounded-[32px] border border-gray-100 text-center hover:bg-white transition-all hover:shadow-xl group">
-                    <div className="text-3xl font-black text-[#111827] mb-1 group-hover:text-blue-600">24/7</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Emergency Care</div>
-                </div>
-                <div className="bg-gray-50 p-6 md:p-8 rounded-[32px] border border-gray-100 text-center hover:bg-white transition-all hover:shadow-xl group">
-                    <div className="text-3xl font-black text-[#111827] mb-1 group-hover:text-blue-600">ISO</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Certified Safety</div>
+            {/* CTA - Compact */}
+            <section className="px-4 py-8 md:py-12 max-w-6xl mx-auto">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 text-center text-white">
+                    <h2 className="text-2xl md:text-3xl font-black mb-3">Ready to Transform Your Smile?</h2>
+                    <p className="text-blue-100 text-sm md:text-base mb-6 max-w-2xl mx-auto">
+                        Join thousands of satisfied patients. Book your appointment today.
+                    </p>
+                    <Link to="/register" className="inline-block px-8 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-all text-sm md:text-base">
+                        Book Appointment Now
+                    </Link>
                 </div>
             </section>
 
-            {/* Quick Feature Strip */}
-            <section className="px-8 py-16 bg-gray-50/50">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-                    <div className="flex items-start gap-6">
-                        <div className="text-3xl">🗓️</div>
-                        <div>
-                            <h3 className="font-black text-[#111827] mb-2 uppercase tracking-tight text-sm">Instant Booking</h3>
-                            <p className="text-gray-400 text-xs leading-relaxed">Reserve your session in seconds through our clinical portal.</p>
+            {/* Footer - Compact */}
+            <footer className="px-4 py-6 border-t border-gray-200 bg-white">
+                <div className="max-w-6xl mx-auto">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
+                            <span className="font-bold">DentAlign</span>
                         </div>
-                    </div>
-                    <div className="flex items-start gap-6">
-                        <div className="text-3xl">📊</div>
-                        <div>
-                            <h3 className="font-black text-[#111827] mb-2 uppercase tracking-tight text-sm">Digital Records</h3>
-                            <p className="text-gray-400 text-xs leading-relaxed">Secure access to all your treatment history and X-rays.</p>
+                        <div className="text-xs text-gray-600">
+                            © 2024 DentAlign. All rights reserved.
                         </div>
-                    </div>
-                    <div className="flex items-start gap-6">
-                        <div className="text-3xl">🌿</div>
-                        <div>
-                            <h3 className="font-black text-[#111827] mb-2 uppercase tracking-tight text-sm">Modern Hygiene</h3>
-                            <p className="text-gray-400 text-xs leading-relaxed">State-of-the-art sterilization and patient care protocols.</p>
+                        <div className="flex gap-4 text-xs text-gray-600">
+                            <a href="#about" className="hover:text-blue-600">About</a>
+                            <Link to="/login" className="hover:text-blue-600">Login</Link>
+                            <Link to="/register" className="hover:text-blue-600">Register</Link>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Footer */}
-            <footer className="px-8 py-12 border-t border-gray-50 text-center bg-white">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm">D</div>
-                        <span className="text-xl font-black text-[#111827]">DentAlign Clinic</span>
-                    </div>
-                    <div className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.4em]">
-                        Precision Dentistry • Clinical Excellence
-                    </div>
-                    <div className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                        © 2024 DentAlign. 01 Main Road, Clinic City
                     </div>
                 </div>
             </footer>

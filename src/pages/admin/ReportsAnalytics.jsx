@@ -6,19 +6,53 @@ const ReportsAnalytics = () => {
     const navigate = useNavigate();
     const [selectedPeriod, setSelectedPeriod] = useState('month');
 
+    // Dynamic data based on selected period
+    const getChartData = () => {
+        switch (selectedPeriod) {
+            case 'week':
+                return [
+                    { label: 'Mon', rev: 12, h: '40%' },
+                    { label: 'Tue', rev: 18, h: '60%' },
+                    { label: 'Wed', rev: 15, h: '50%' },
+                    { label: 'Thu', rev: 22, h: '75%' },
+                    { label: 'Fri', rev: 28, h: '90%' },
+                    { label: 'Sat', rev: 32, h: '95%' },
+                    { label: 'Sun', rev: 10, h: '35%' }
+                ];
+            case 'year':
+                return [
+                    { label: 'Jan', rev: 380, h: '60%' },
+                    { label: 'Feb', rev: 420, h: '70%' },
+                    { label: 'Mar', rev: 395, h: '65%' },
+                    { label: 'Apr', rev: 450, h: '80%' },
+                    { label: 'May', rev: 480, h: '90%' },
+                    { label: 'Jun', rev: 485, h: '95%' },
+                    { label: 'Jul', rev: 460, h: '85%' },
+                    { label: 'Aug', rev: 430, h: '75%' },
+                    { label: 'Sep', rev: 490, h: '92%' },
+                    { label: 'Oct', rev: 510, h: '96%' },
+                    { label: 'Nov', rev: 470, h: '88%' },
+                    { label: 'Dec', rev: 520, h: '98%' }
+                ];
+            case 'month':
+            default:
+                return [
+                    { label: 'Week 1', rev: 95, h: '65%' },
+                    { label: 'Week 2', rev: 110, h: '75%' },
+                    { label: 'Week 3', rev: 105, h: '70%' },
+                    { label: 'Week 4', rev: 125, h: '85%' }
+                ];
+        }
+    };
+
+    const chartData = getChartData();
+    const periodTotals = { week: 'Rs. 137k', month: 'Rs. 435k', year: 'Rs. 5.5M' };
+    const periodGrowth = { week: '↑ 8.4%', month: '↑ 14.2%', year: '↑ 22.5%' };
+
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
         navigate('/login');
     };
-
-    const monthlyRevenue = [
-        { month: 'Jan', rev: 380, h: '60%' },
-        { month: 'Feb', rev: 420, h: '70%' },
-        { month: 'Mar', rev: 395, h: '65%' },
-        { month: 'Apr', rev: 450, h: '80%' },
-        { month: 'May', rev: 480, h: '90%' },
-        { month: 'Jun', rev: 485, h: '95%' }
-    ];
 
     return (
         <div className="min-h-screen bg-gray-50 flex font-inter">
@@ -74,56 +108,129 @@ const ReportsAnalytics = () => {
                 </header>
 
                 <div className="grid grid-cols-12 gap-6 mb-8">
-                    {/* Revenue Chart */}
+                    {/* Revenue Chart - SVG Bar Chart */}
                     <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex justify-between items-center mb-8">
+                        <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Revenue Trends</h3>
-                                <div className="text-sm text-green-600 font-medium">↑ 14.2% vs last period</div>
+                                <div className="text-sm text-green-600 font-medium">{periodGrowth[selectedPeriod]} vs last period</div>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-bold text-gray-900">Rs. 4.8M</div>
+                                <div className="text-2xl font-bold text-gray-900">{periodTotals[selectedPeriod]}</div>
                                 <div className="text-xs text-gray-500 font-medium uppercase">Total Revenue</div>
                             </div>
                         </div>
-                        <div className="flex items-end justify-between h-64 gap-4 px-4">
-                            {monthlyRevenue.map((m, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                                    <div className="w-full bg-blue-500 rounded-t-md hover:bg-blue-600 transition-colors relative group" style={{ height: m.h }}>
-                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                            Rs. {m.rev}k
-                                        </div>
-                                    </div>
-                                    <div className="text-xs font-semibold text-gray-500">{m.month}</div>
-                                </div>
-                            ))}
+
+                        {/* Custom SVG Bar Chart */}
+                        <div className="h-64 w-full">
+                            <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
+                                {/* Y-axis lines */}
+                                {[0, 1, 2, 3, 4].map((i) => (
+                                    <line
+                                        key={i}
+                                        x1="0"
+                                        y1={i * 10}
+                                        x2="100"
+                                        y2={i * 10}
+                                        stroke="#f3f4f6"
+                                        strokeWidth="0.5"
+                                    />
+                                ))}
+
+                                {/* Bars */}
+                                {chartData.map((d, i) => {
+                                    const barHeight = parseFloat(d.h) / 2; // Scale down for 50 height
+                                    const barWidth = 6;
+                                    // Calculate x position based on count to center them
+                                    const x = (i * (100 / chartData.length)) + (100 / chartData.length / 2) - (barWidth / 2);
+
+                                    return (
+                                        <g key={i} className="group cursor-pointer">
+                                            <rect
+                                                x={x}
+                                                y={50 - barHeight}
+                                                width={barWidth}
+                                                height={barHeight}
+                                                rx="1"
+                                                className="fill-indigo-500 hover:fill-indigo-600 transition-all duration-300"
+                                            />
+                                            {/* Tooltip */}
+                                            <g className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <rect
+                                                    x={x - 4}
+                                                    y={50 - barHeight - 8}
+                                                    width="14"
+                                                    height="6"
+                                                    rx="1"
+                                                    fill="#1f2937"
+                                                />
+                                                <text
+                                                    x={x + 3}
+                                                    y={50 - barHeight - 4}
+                                                    fontSize="3"
+                                                    fill="white"
+                                                    textAnchor="middle"
+                                                    dominantBaseline="middle"
+                                                >
+                                                    {d.rev}k
+                                                </text>
+                                            </g>
+                                            <text
+                                                x={x + 3}
+                                                y="55"
+                                                fontSize="3"
+                                                fill="#6b7280"
+                                                textAnchor="middle"
+                                                className="font-medium"
+                                            >
+                                                {d.label}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
                         </div>
                     </div>
 
-                    {/* Services */}
-                    <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                    {/* Services - SVG Pie Chart */}
+                    <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Top Services</h3>
-                        <div className="space-y-6">
+
+                        <div className="flex-1 flex items-center justify-center relative">
+                            {/* Simple Pie Chart using conic-gradient */}
+                            <div className="w-48 h-48 rounded-full relative"
+                                style={{
+                                    background: `conic-gradient(
+                                        #4f46e5 0% 42%, 
+                                        #6366f1 42% 70%, 
+                                        #14b8a6 70% 88%, 
+                                        #f97316 88% 100%
+                                    )`
+                                }}
+                            >
+                                <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center flex-col">
+                                    <span className="text-2xl font-bold text-gray-900">{chartData.length * 12}</span>
+                                    <span className="text-xs text-gray-500 uppercase font-bold">Procedures</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 space-y-3">
                             {[
-                                { label: 'Surgical Procedures', val: '42%', color: 'bg-blue-600' },
+                                { label: 'Surgical Procedures', val: '42%', color: 'bg-indigo-600' },
                                 { label: 'Cosmetic Dentistry', val: '28%', color: 'bg-indigo-500' },
                                 { label: 'General Checkups', val: '18%', color: 'bg-teal-500' },
-                                { label: 'Orthodontics', val: '12%', color: 'bg-orange-400' }
+                                { label: 'Orthodontics', val: '12%', color: 'bg-orange-500' }
                             ].map((s, i) => (
-                                <div key={i}>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-xs font-bold text-gray-600">{s.label}</span>
-                                        <span className="text-xs font-bold text-gray-900">{s.val}</span>
+                                <div key={i} className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded-full ${s.color}`}></div>
+                                        <span className="text-gray-600 font-medium">{s.label}</span>
                                     </div>
-                                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className={`h-full ${s.color} rounded-full`} style={{ width: s.val }}></div>
-                                    </div>
+                                    <span className="font-bold text-gray-900">{s.val}</span>
                                 </div>
                             ))}
                         </div>
-                        <button className="w-full mt-8 py-2 border border-blue-600 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-colors">
-                            View Service Details
-                        </button>
                     </div>
 
                     {/* KPIs */}

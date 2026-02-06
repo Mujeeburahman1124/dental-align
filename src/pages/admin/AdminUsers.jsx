@@ -8,6 +8,14 @@ const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [newUser, setNewUser] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        role: 'patient',
+        phone: ''
+    });
 
     const fetchUsers = async () => {
         try {
@@ -37,6 +45,22 @@ const AdminUsers = () => {
             setUsers(users.filter(u => u._id !== id));
         } catch (error) {
             alert(error.response?.data?.message || 'Delete failed');
+        }
+    };
+
+    const handleAddUser = async (e) => {
+        e.preventDefault();
+        try {
+            // Using register endpoint to create user
+            const config = { headers: { 'Content-Type': 'application/json' } };
+            await axios.post('http://localhost:5000/api/auth/register', newUser, config);
+
+            alert('User created successfully');
+            setShowModal(false);
+            setNewUser({ fullName: '', email: '', password: '', role: 'patient', phone: '' });
+            fetchUsers(); // Refresh list
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to create user');
         }
     };
 
@@ -97,6 +121,12 @@ const AdminUsers = () => {
                             />
                             <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
                         </div>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        >
+                            <span>+</span> Add User
+                        </button>
                     </div>
                 </header>
 
@@ -131,9 +161,9 @@ const AdminUsers = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${u.role === 'admin' ? 'bg-purple-50 text-purple-600' :
-                                                u.role === 'dentist' ? 'bg-blue-50 text-blue-600' :
-                                                    u.role === 'staff' ? 'bg-orange-50 text-orange-600' :
-                                                        'bg-green-50 text-green-600'
+                                            u.role === 'dentist' ? 'bg-blue-50 text-blue-600' :
+                                                u.role === 'staff' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-green-50 text-green-600'
                                             }`}>
                                             {u.role}
                                         </span>
@@ -162,6 +192,84 @@ const AdminUsers = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Add User Modal */}
+                {showModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Add New User</h2>
+                            <form onSubmit={handleAddUser} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={newUser.fullName}
+                                        onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-sm"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={newUser.email}
+                                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-sm"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Password</label>
+                                    <input
+                                        type="password"
+                                        value={newUser.password}
+                                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-sm"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Role</label>
+                                    <select
+                                        value={newUser.role}
+                                        onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-sm"
+                                    >
+                                        <option value="patient">Patient</option>
+                                        <option value="dentist">Dentist</option>
+                                        <option value="staff">Staff</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Phone (Optional)</label>
+                                    <input
+                                        type="tel"
+                                        value={newUser.phone}
+                                        onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-sm"
+                                    />
+                                </div>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowModal(false)}
+                                        className="flex-1 py-2 text-gray-600 bg-gray-100 rounded-lg text-sm font-bold hover:bg-gray-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-2 text-white bg-blue-600 rounded-lg text-sm font-bold hover:bg-blue-700"
+                                    >
+                                        Create User
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

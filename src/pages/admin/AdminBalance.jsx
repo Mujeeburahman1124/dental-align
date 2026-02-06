@@ -42,6 +42,14 @@ const AdminBalance = () => {
             <span className="text-lg">💰</span>
             <span className="font-semibold text-sm">Financial Overview</span>
           </Link>
+          <Link to="/admin/users" className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-all">
+            <span className="text-lg">👥</span>
+            <span className="font-semibold text-sm">User Management</span>
+          </Link>
+          <Link to="/admin/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-all">
+            <span className="text-lg">⚙️</span>
+            <span className="font-semibold text-sm">Settings</span>
+          </Link>
         </nav>
 
         <div className="p-4 border-t border-gray-100">

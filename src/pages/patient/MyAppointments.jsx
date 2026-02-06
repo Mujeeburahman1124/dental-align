@@ -60,7 +60,27 @@ const MyAppointments = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <button className="text-red-500 text-xs font-bold hover:underline">Cancel</button>
+                    {new Date(app.date) >= new Date() && (
+                      <button
+                        onClick={async () => {
+                          if (window.confirm('Are you sure you want to cancel this appointment?')) {
+                            try {
+                              const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                              const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+                              await axios.put(`http://localhost:5000/api/appointments/${app._id}`, { status: 'cancelled' }, config);
+                              setAppointments(appointments.filter(a => a._id !== app._id));
+                              alert('Appointment cancelled successfully');
+                            } catch (error) {
+                              console.error('Cancel Error:', error);
+                              alert('Failed to cancel appointment');
+                            }
+                          }
+                        }}
+                        className="text-red-500 text-xs font-bold hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

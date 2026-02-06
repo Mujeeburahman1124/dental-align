@@ -14,11 +14,16 @@ import DentistPrescriptions from './pages/dentist/DentistPrescriptions';
 import DentistCalendar from './pages/dentist/DentistCalendar';
 import DentistSettings from './pages/dentist/DentistSettings';
 import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffAppointments from './pages/staff/StaffAppointments';
+import StaffPatients from './pages/staff/StaffPatients';
+import StaffBilling from './pages/staff/StaffBilling';
+import StaffBookAppointment from './pages/staff/StaffBookAppointment';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminBalance from './pages/admin/AdminBalance';
 import ReportsAnalytics from './pages/admin/ReportsAnalytics';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSettings from './pages/admin/AdminSettings';
+
 import './index.css';
 
 function App() {
@@ -28,6 +33,7 @@ function App() {
         {/* Main Landing Page */}
         <Route path="/" element={<HomePage />} />
         <Route path="/booking" element={<BookingPage />} />
+
 
         {/* Authentication Routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -58,6 +64,10 @@ function App() {
         {/* Staff Routes */}
         <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/staff/appointments" element={<StaffAppointments />} />
+          <Route path="/staff/patients" element={<StaffPatients />} />
+          <Route path="/staff/billing" element={<StaffBilling />} />
+          <Route path="/staff/book-appointment" element={<StaffBookAppointment />} />
         </Route>
         <Route path="/staff-dashboard" element={<Navigate to="/staff/dashboard" replace />} />
 

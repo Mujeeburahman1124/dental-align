@@ -104,3 +104,20 @@ export const getTreatmentSummary = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Get all clinic treatments (Admin/Staff)
+// @route   GET /api/treatments/all
+// @access  Private (Admin/Staff)
+export const getAllTreatments = async (req, res) => {
+    try {
+        const treatments = await TreatmentRecord.find({})
+            .populate('patient', 'fullName email')
+            .populate('dentist', 'fullName')
+            .sort({ date: -1 });
+
+        res.json(treatments);
+    } catch (error) {
+        console.error('Get All Treatments Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

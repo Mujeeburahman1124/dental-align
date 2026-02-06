@@ -61,6 +61,67 @@ export const createAppointment = async (req, res) => {
     }
 };
 
+// @desc    Book appointment for walk-in patient (Staff only)
+// @route   POST /api/appointments/walk-in
+// @access  Private (Staff/Admin)
+export const createWalkInAppointment = async (req, res) => {
+    try {
+        const { patientName, patientEmail, patientPhone, date, time, reason, dentist, notes, sendEmail } = req.body;
+
+        // Validate required fields
+        if (!patientName || !patientEmail || !patientPhone || !date || !time || !reason) {
+            return res.status(400).json({ message: 'Please provide all required patient and appointment details' });
+        }
+
+        // Check if patient exists by email
+        let patient = await User.findOne({ email: patientEmail });
+
+        // If patient doesn't exist, create a basic patient record
+        if (!patient) {
+            patient = await User.create({
+                fullName: patientName,
+                email: patientEmail,
+                phone: patientPhone,
+                password: Math.random().toString(36).slice(-8), // Random temp password
+                role: 'patient'
+            });
+        }
+
+        // Create appointment
+        const appointment = await Appointment.create({
+            patient: patient._id,
+            dentist: dentist || null,
+            date,
+            time,
+            reason,
+            serviceName: reason,
+            estimatedCost: 0,
+            status: 'confirmed', // Auto-confirm staff bookings
+            notes: notes || '',
+            isFeePaid: false
+        });
+
+        // Populate patient and dentist info
+        await appointment.populate('patient', 'fullName email phone');
+        if (dentist) {
+            await appointment.populate('dentist', 'fullName specialization');
+        }
+
+        // TODO: Send email notification if sendEmail is true
+        // This would require email service integration
+
+        res.status(201).json({
+            message: 'Appointment booked successfully',
+            appointment,
+            emailSent: sendEmail ? true : false
+        });
+
+    } catch (error) {
+        console.error('Walk-in booking error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 // @desc    Get user appointments
 // @route   GET /api/appointments/my-appointments
 // @access  Private
@@ -76,8 +137,13 @@ export const getMyAppointments = async (req, res) => {
             appointments = await Appointment.find({ dentist: req.user.id })
                 .populate('patient', 'fullName phone')
                 .sort({ date: 1 });
+        } else if (req.user.role === 'staff' || req.user.role === 'admin') {
+            // Staff and Admin can see all appointments
+            appointments = await Appointment.find({})
+                .populate('patient', 'fullName phone email')
+                .populate('dentist', 'fullName specialization')
+                .sort({ date: 1 });
         } else {
-            // Admin sees all? or restricted? Let's just return empty for others for now
             appointments = [];
         }
 

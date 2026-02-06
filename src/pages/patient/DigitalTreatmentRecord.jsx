@@ -114,8 +114,11 @@ const DigitalTreatmentRecord = () => {
                 <p className="text-gray-400 font-bold mt-2">{user.fullName} • Patient ID: #{user._id?.slice(-4) || '----'}</p>
               </div>
               <div className="flex gap-3">
-                <button className="bg-gray-50 hover:bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
-                  <span>📥</span> Download PDF
+                <button
+                  onClick={() => window.print()}
+                  className="bg-gray-50 hover:bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2"
+                >
+                  <span>📥</span> Download/Print Record
                 </button>
               </div>
             </div>

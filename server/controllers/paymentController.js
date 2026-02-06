@@ -104,3 +104,21 @@ export const getBillingSummary = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Get all payments (clinic view)
+// @route   GET /api/payments/all
+// @access  Private (Admin/Staff)
+export const getAllPayments = async (req, res) => {
+    try {
+        const payments = await Payment.find({})
+            .populate('patient', 'fullName email')
+            .populate('appointment', 'date time reason')
+            .populate('treatment', 'title date cost')
+            .sort({ date: -1 });
+
+        res.json(payments);
+    } catch (error) {
+        console.error('Fetch All Payments Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

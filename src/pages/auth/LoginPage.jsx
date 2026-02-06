@@ -10,7 +10,6 @@ const LoginPage = () => {
     });
 
     const [showPassword, setShowPassword] = useState(false);
-    const [activeTab, setActiveTab] = useState('signin');
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');

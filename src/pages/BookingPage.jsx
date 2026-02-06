@@ -1,210 +1,286 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 
 const BookingPage = () => {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('userInfo'));
+    const user = JSON.parse(localStorage.getItem('userInfo')) || null;
 
-    const [step, setStep] = useState(1);
-    const [dentists, setDentists] = useState([]);
-    const [selectedDentist, setSelectedDentist] = useState(null);
-    const [selectedService, setSelectedService] = useState('Dental Checkup');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [selectedTime, setSelectedTime] = useState('');
-    const [patientNote, setPatientNote] = useState('');
-    const [bookingLoading, setBookingLoading] = useState(false);
-    const [bookedSlots, setBookedSlots] = useState([]);
-    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        patientName: user?.fullName || '',
+        patientEmail: user?.email || '',
+        patientPhone: user?.phone || '',
+        date: '',
+        time: '',
+        service: '',
+        dentist: '',
+        notes: ''
+    });
+
+    const [loading, setLoading] = useState(false);
 
     const services = [
-        { name: 'Dental Checkup', price: 2500, duration: '30 mins', icon: '🔍' },
-        { name: 'Teeth Whitening', price: 15000, duration: '60 mins', icon: '✨' },
-        { name: 'Root Canal', price: 35000, duration: '90 mins', icon: '🦷' },
-        { name: 'Cavity Filling', price: 8000, duration: '45 mins', icon: '💎' },
-        { name: 'Dental Extraction', price: 12000, duration: '45 mins', icon: '🚫' },
+        'General Checkup', 'Teeth Cleaning', 'Teeth Whitening', 'Cavity Filling',
+        'Root Canal', 'Tooth Extraction', 'Dental Implant', 'Orthodontics', 'Emergency Care'
     ];
 
-    const currentService = services.find(s => s.name === selectedService);
-    const timeSlots = ['09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM', '01:00 PM', '02:30 PM', '03:15 PM', '04:00 PM'];
+    const dentists = [
+        { id: '1', name: 'Dr. Sarah Johnson' },
+        { id: '2', name: 'Dr. Muksith Ahmed' },
+        { id: '3', name: 'Dr. Emily Chen' }
+    ];
 
-    useEffect(() => {
-        const fetchDentists = async () => {
-            try {
-                const { data } = await axios.get('http://localhost:5000/api/users/dentists');
-                setDentists(data);
-                if (data.length > 0) setSelectedDentist(data[0]);
-            } catch (error) {
-                console.error('Error fetching dentists:', error);
-            }
-        };
-        fetchDentists();
-    }, []);
+    const timeSlots = [
+        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+        '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
+    ];
 
-    useEffect(() => {
-        const fetchBookedSlots = async () => {
-            if (!selectedDentist || !selectedDate) return;
-            setSlotsLoading(true);
-            try {
-                const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await axios.get(`http://localhost:5000/api/appointments/booked-slots?dentistId=${selectedDentist._id}&date=${selectedDate}`, config);
-                setBookedSlots(data);
-                if (data.includes(selectedTime)) setSelectedTime('');
-            } catch (error) {
-                console.error('Error fetching booked slots:', error);
-            } finally {
-                setSlotsLoading(false);
-            }
-        };
-        fetchBookedSlots();
-    }, [selectedDentist, selectedDate, user.token]);
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-    const handleConfirmBooking = async () => {
-        if (!user) return navigate('/login');
-        if (!selectedTime) return alert('Please select a time slot.');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-        setBookingLoading(true);
+        if (!user) {
+            alert('Please login to book an appointment');
+            navigate('/login');
+            return;
+        }
+
+        if (!formData.date || !formData.time || !formData.service) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        setLoading(true);
         try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const appointmentData = {
-                dentistId: selectedDentist._id,
-                date: selectedDate,
-                time: selectedTime,
-                reason: selectedService,
-                serviceName: selectedService,
-                estimatedCost: currentService?.price || 0,
-                note: patientNote
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.token}`
+                }
             };
-            await axios.post('http://localhost:5000/api/appointments', appointmentData, config);
-            setStep(3);
+
+            await axios.post('http://localhost:5000/api/appointments', {
+                date: formData.date,
+                time: formData.time,
+                reason: formData.service,
+                dentist: formData.dentist || null,
+                notes: formData.notes,
+                status: 'pending'
+            }, config);
+
+            alert('Appointment booked successfully! 🎉');
+            navigate('/patient/dashboard');
         } catch (error) {
-            alert(error.response?.data?.message || 'Booking failed.');
+            console.error('Booking error:', error);
+            alert(error.response?.data?.message || 'Failed to book appointment');
         } finally {
-            setBookingLoading(false);
+            setLoading(false);
         }
     };
 
-    const isSlotBooked = (time) => bookedSlots.includes(time);
-
-    if (step === 3) {
-        return (
-            <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-inter">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center p-8">
-                    <div className="bg-white max-w-xl w-full rounded-[48px] p-16 text-center shadow-2xl border border-gray-100 flex flex-col items-center">
-                        <div className="w-24 h-24 bg-green-500 text-white rounded-full flex items-center justify-center text-4xl mb-8 shadow-xl shadow-green-100 animate-bounce">✓</div>
-                        <h2 className="text-4xl font-black text-[#111827] mb-4 tracking-tighter">Visit Confirmed!</h2>
-                        <p className="text-gray-400 font-bold mb-10 leading-relaxed">Your visit for <span className="text-[#111827]">{selectedService}</span> with <span className="text-[#111827]">Dr. {selectedDentist?.fullName}</span> is scheduled.</p>
-                        <button onClick={() => navigate('/patient/dashboard')} className="w-full bg-[#111827] text-white py-5 rounded-2xl font-bold hover:bg-black transition-all shadow-xl">Go to Dashboard</button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const today = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-inter pb-20">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 font-inter">
             <Navbar />
-            <div className="max-w-7xl mx-auto w-full px-8 py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                    <div className="lg:col-span-8 space-y-12">
-                        {step === 1 ? (
-                            <>
-                                <section className="space-y-6">
-                                    <h2 className="text-2xl font-black text-[#111827] tracking-tight">Select Service</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {services.map(s => (
-                                            <div key={s.name} onClick={() => setSelectedService(s.name)} className={`p-6 rounded-[32px] border-2 cursor-pointer transition-all flex items-center gap-6 ${selectedService === s.name ? 'border-[#007AFF] bg-blue-50/30' : 'border-gray-100 bg-white hover:border-blue-200'}`}>
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${selectedService === s.name ? 'bg-[#007AFF] text-white' : 'bg-gray-50 text-gray-600'}`}>{s.icon}</div>
-                                                <div className="flex-1 font-bold text-[#111827]">{s.name}</div>
-                                                <div className={`text-sm font-black ${selectedService === s.name ? 'text-[#007AFF]' : 'text-gray-400'}`}>Rs. {s.price.toLocaleString()}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
 
-                                <section className="space-y-6">
-                                    <h2 className="text-2xl font-black text-[#111827] tracking-tight">Pick Date & Time</h2>
-                                    <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-                                        <input type="date" value={selectedDate} min={new Date().toISOString().split('T')[0]} onChange={(e) => setSelectedDate(e.target.value)} className="w-full max-w-sm bg-gray-50 p-4 rounded-2xl font-bold text-[#111827] border-none outline-none focus:bg-blue-50 transition-colors" />
+            <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
+                {/* Header - Compact */}
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">Book Appointment</h1>
+                    <p className="text-sm text-gray-600">Fill in the details to schedule your visit</p>
+                </div>
 
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Available Sessions</h4>
-                                                {slotsLoading && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                                {timeSlots.map(t => {
-                                                    const booked = isSlotBooked(t);
-                                                    return (
-                                                        <button
-                                                            key={t}
-                                                            disabled={booked}
-                                                            onClick={() => setSelectedTime(t)}
-                                                            className={`py-4 rounded-2xl text-xs font-bold border transition-all relative overflow-hidden ${booked ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed' : selectedTime === t ? 'bg-[#007AFF] border-[#007AFF] text-white shadow-lg shadow-blue-100' : 'bg-white border-gray-100 text-gray-500 hover:border-blue-200'}`}
-                                                        >
-                                                            {t}
-                                                            {booked && <span className="absolute inset-0 flex items-center justify-center bg-red-50/10 text-[8px] font-black uppercase tracking-tighter text-red-400/50 mt-6 pt-1">Reserved</span>}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </>
-                        ) : (
-                            <section className="space-y-12 animate-fade-in">
-                                <div className="space-y-6">
-                                    <h2 className="text-2xl font-black text-[#111827] tracking-tight">Visit Details</h2>
-                                    <textarea value={patientNote} onChange={(e) => setPatientNote(e.target.value)} placeholder="Symptoms or concerns..." className="w-full h-40 bg-white border border-gray-100 rounded-[32px] p-8 font-medium text-[#111827] focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none shadow-sm"></textarea>
-                                </div>
-                                <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                                    <h2 className="text-xl font-black text-[#111827]">Financial Disclosure</h2>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center py-4 border-b border-gray-50 text-sm font-bold">
-                                            <span className="text-gray-400">{selectedService}</span>
-                                            <span className="text-[#111827]">Rs. {currentService?.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-4 border-b border-gray-50 text-sm font-bold bg-blue-50/30 -mx-4 px-4 rounded-xl">
-                                            <span className="text-[#007AFF]">Required Booking Fee</span>
-                                            <span className="text-[#007AFF]">Rs. 500</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-6">
-                                            <span className="text-lg font-black text-[#111827]">Total Commitment</span>
-                                            <span className="text-3xl font-black text-[#007AFF]">Rs. {(currentService?.price + 500).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-                    </div>
+                {/* Booking Form - Compact */}
+                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-5">
 
-                    <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-                        <div className="bg-white p-10 rounded-[48px] shadow-2xl shadow-gray-200/50 border border-gray-50">
-                            <h3 className="text-xl font-black text-[#111827] mb-8">Booking Summary</h3>
-                            <div className="space-y-6 mb-10">
-                                <div className="p-4 bg-gray-50 rounded-2xl">
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Service</div>
-                                    <div className="text-sm font-black text-[#111827]">{selectedService}</div>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-2xl">
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Schedule</div>
-                                    <div className="text-sm font-black text-[#111827]">{new Date(selectedDate).toLocaleDateString()} • {selectedTime || 'Pending'}</div>
-                                </div>
+                    {/* Patient Information */}
+                    <div className="space-y-3">
+                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">1</span>
+                            Patient Info
+                        </h2>
+
+                        <div className="grid md:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Full Name *</label>
+                                <input
+                                    type="text"
+                                    name="patientName"
+                                    value={formData.patientName}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                                    placeholder="Your name"
+                                />
                             </div>
-                            {step === 1 ? (
-                                <button onClick={() => selectedTime ? setStep(2) : alert('Select a time')} className="w-full bg-[#111827] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all">Continue</button>
-                            ) : (
-                                <div className="space-y-4">
-                                    <button onClick={handleConfirmBooking} disabled={bookingLoading} className="w-full bg-[#007AFF] text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-[#0066D6] transition-all shadow-xl shadow-blue-100">{bookingLoading ? 'Processing...' : 'Place Order'}</button>
-                                    <button onClick={() => setStep(1)} className="w-full text-center text-xs font-black text-gray-400 uppercase tracking-widest hover:text-[#111827]">Back</button>
-                                </div>
-                            )}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email *</label>
+                                <input
+                                    type="email"
+                                    name="patientEmail"
+                                    value={formData.patientEmail}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                                    placeholder="your@email.com"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Phone *</label>
+                            <input
+                                type="tel"
+                                name="patientPhone"
+                                value={formData.patientPhone}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                                placeholder="0771234567"
+                            />
                         </div>
                     </div>
-                </div>
+
+                    {/* Appointment Details */}
+                    <div className="space-y-3 pt-3 border-t border-gray-100">
+                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">2</span>
+                            Appointment Details
+                        </h2>
+
+                        <div className="grid md:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Date *</label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleChange}
+                                    min={today}
+                                    required
+                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Time *</label>
+                                <select
+                                    name="time"
+                                    value={formData.time}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                                >
+                                    <option value="">Choose time</option>
+                                    {timeSlots.map(slot => (
+                                        <option key={slot} value={slot}>{slot}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Service *</label>
+                            <select
+                                name="service"
+                                value={formData.service}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="">Select service</option>
+                                {services.map(service => (
+                                    <option key={service} value={service}>{service}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Dentist (Optional)</label>
+                            <select
+                                name="dentist"
+                                value={formData.dentist}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="">Any available</option>
+                                {dentists.map(dentist => (
+                                    <option key={dentist.id} value={dentist.name}>{dentist.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Notes (Optional)</label>
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleChange}
+                                rows="2"
+                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none resize-none"
+                                placeholder="Any concerns..."
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    {/* Summary - Compact */}
+                    {formData.date && formData.time && formData.service && (
+                        <div className="bg-blue-50 rounded-xl p-4 space-y-2">
+                            <h3 className="font-bold text-sm text-gray-900">Summary</h3>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span className="text-gray-600">Date:</span>
+                                    <div className="font-bold text-gray-900">{new Date(formData.date).toLocaleDateString()}</div>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Time:</span>
+                                    <div className="font-bold text-gray-900">{formData.time}</div>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Service:</span>
+                                    <div className="font-bold text-gray-900">{formData.service}</div>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">Fee:</span>
+                                    <div className="font-bold text-blue-600">Rs. 500</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Buttons - Compact */}
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => navigate(-1)}
+                            className="flex-1 px-4 py-3 text-sm bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 px-4 py-3 text-sm bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Booking...
+                                </>
+                            ) : (
+                                'Confirm Booking'
+                            )}
+                        </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500 text-center">
+                        Booking fee: Rs. 500. Payment after confirmation.
+                    </p>
+                </form>
             </div>
         </div>
     );
