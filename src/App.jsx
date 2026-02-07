@@ -23,6 +23,7 @@ import AdminBalance from './pages/admin/AdminBalance';
 import ReportsAnalytics from './pages/admin/ReportsAnalytics';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminSchedule from './pages/admin/AdminSchedule';
 
 import './index.css';
 
@@ -78,6 +79,7 @@ function App() {
           <Route path="/admin/reports" element={<ReportsAnalytics />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/schedule" element={<AdminSchedule />} />
         </Route>
 
         {/* Catch-all route - redirect to login */}

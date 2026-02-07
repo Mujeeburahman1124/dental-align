@@ -32,10 +32,24 @@ const BookingPage = () => {
         { id: '3', name: 'Dr. Emily Chen' }
     ];
 
-    const timeSlots = [
+    const [timeSlots, setTimeSlots] = useState([
         '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
         '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
-    ];
+    ]); // Default fallback
+
+    React.useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const { data } = await axios.get(`${API_BASE_URL}/api/settings`);
+                if (data.timeSlots && data.timeSlots.length > 0) {
+                    setTimeSlots(data.timeSlots);
+                }
+            } catch (error) {
+                console.error('Error fetching settings:', error);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

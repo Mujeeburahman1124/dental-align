@@ -93,7 +93,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Quick Actions - Compact */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <Link to="/admin/reports" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
             <div className="text-2xl mb-2">📈</div>
             <div className="text-xs font-bold text-gray-900">Reports</div>
@@ -105,6 +105,10 @@ const AdminDashboard = () => {
           <Link to="/admin/users" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
             <div className="text-2xl mb-2">👨‍⚕️</div>
             <div className="text-xs font-bold text-gray-900">Staff</div>
+          </Link>
+          <Link to="/admin/schedule" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
+            <div className="text-2xl mb-2">📅</div>
+            <div className="text-xs font-bold text-gray-900">Schedule</div>
           </Link>
           <Link to="/admin/settings" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
             <div className="text-2xl mb-2">⚙️</div>

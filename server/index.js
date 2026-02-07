@@ -37,6 +37,7 @@ const userRoutes = await import('./routes/users.js');
 const treatmentRoutes = await import('./routes/treatments.js');
 const paymentRoutes = await import('./routes/payments.js');
 const notificationRoutes = await import('./routes/notifications.js');
+const clinicSettingsRoutes = await import('./routes/clinicSettings.js');
 
 // Routes
 app.use('/api/auth', authRoutes.default);
@@ -45,6 +46,7 @@ app.use('/api/users', userRoutes.default);
 app.use('/api/treatments', treatmentRoutes.default);
 app.use('/api/payments', paymentRoutes.default);
 app.use('/api/notifications', notificationRoutes.default);
+app.use('/api/settings', clinicSettingsRoutes.default);
 
 // Health check route
 app.get('/api/health', (req, res) => {
