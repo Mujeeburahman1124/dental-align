@@ -16,9 +16,9 @@ const PatientDashboard = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token} ` } };
             const [resAppt, resSummary, resNotif] = await Promise.all([
-                axios.get(`${API_BASE_URL} /api/appointments / my - appointments`, config),
-                axios.get(`${API_BASE_URL} /api/payments / summary`, config),
-                axios.get(`${API_BASE_URL} /api/notifications`, config)
+                axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config),
+                axios.get(`${API_BASE_URL}/api/payments/summary`, config),
+                axios.get(`${API_BASE_URL}/api/notifications`, config)
             ]);
 
             if (resAppt.data?.length > 0) {
@@ -136,7 +136,7 @@ const PatientDashboard = () => {
                         {notifications.length > 0 ? notifications.slice(0, 4).map(n => (
                             <div key={n._id} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg">
                                 <div className={`w - 8 h - 8 rounded - lg flex items - center justify - center text - lg shrink - 0 ${n.type === 'appointment' ? 'bg-blue-100' :
-                                        n.type === 'payment' ? 'bg-green-100' : 'bg-gray-100'
+                                    n.type === 'payment' ? 'bg-green-100' : 'bg-gray-100'
                                     } `}>
                                     {n.type === 'appointment' ? '📅' : n.type === 'payment' ? '💳' : 'ℹ️'}
                                 </div>
