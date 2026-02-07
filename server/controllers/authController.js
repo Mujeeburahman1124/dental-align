@@ -15,10 +15,12 @@ export const registerUser = async (req, res) => {
     try {
         const { fullName, email, phone, password, role, slmcNumber, specialization } = req.body;
 
-        // Check if user exists
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+        // Check if user exists (only if email is provided)
+        if (email) {
+            const userExists = await User.findOne({ email });
+            if (userExists) {
+                return res.status(400).json({ message: 'User already exists with this email' });
+            }
         }
 
         // Validate Dentist fields
@@ -26,13 +28,22 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'Dentists must provide SLMC Number and Specialization' });
         }
 
+        // Generate Patient ID if role is patient
+        let patientId = undefined;
+        if (!role || role === 'patient') {
+            const count = await User.countDocuments({ role: 'patient' });
+            // Simple ID generation: P-1000 + count. In production, use more robust method.
+            patientId = `P-${1001 + count}`;
+        }
+
         // Create user
         const user = await User.create({
             fullName,
-            email,
+            email: email || undefined, // Allow sparse unique index to work
             phone,
             password,
             role: role || 'patient',
+            patientId,
             slmcNumber: role === 'dentist' ? slmcNumber : undefined,
             specialization: role === 'dentist' ? specialization : undefined,
         });
@@ -41,6 +52,7 @@ export const registerUser = async (req, res) => {
             res.status(201).json({
                 _id: user._id,
                 fullName: user.fullName,
+                patientId: user.patientId,
                 email: user.email,
                 role: user.role,
                 slmcNumber: user.slmcNumber,
@@ -62,14 +74,24 @@ export const registerUser = async (req, res) => {
 // @access  Public
 export const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, patientId, password } = req.body;
 
-        const user = await User.findOne({ email });
+        let user;
+
+        // Login by Email (Staff/Admin/Dentist or Patient with email)
+        if (email) {
+            user = await User.findOne({ email });
+        }
+        // Login by Patient ID
+        else if (patientId) {
+            user = await User.findOne({ patientId: patientId.toUpperCase() });
+        }
 
         if (user && (await user.matchPassword(password))) {
             res.json({
                 _id: user._id,
                 fullName: user.fullName,
+                patientId: user.patientId,
                 email: user.email,
                 role: user.role,
                 slmcNumber: user.slmcNumber,
@@ -77,7 +99,7 @@ export const loginUser = async (req, res) => {
                 token: generateToken(user._id),
             });
         } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+            res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (error) {
         console.error(error);

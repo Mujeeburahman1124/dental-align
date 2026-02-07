@@ -68,20 +68,29 @@ export const createWalkInAppointment = async (req, res) => {
     try {
         const { patientName, patientEmail, patientPhone, date, time, reason, dentist, notes, sendEmail } = req.body;
 
-        // Validate required fields
-        if (!patientName || !patientEmail || !patientPhone || !date || !time || !reason) {
-            return res.status(400).json({ message: 'Please provide all required patient and appointment details' });
+        // Validate required fields (Email is optional)
+        if (!patientName || !patientPhone || !date || !time || !reason) {
+            return res.status(400).json({ message: 'Please provide required details (Name, Phone, Date, Time, Service)' });
         }
 
-        // Check if patient exists by email
-        let patient = await User.findOne({ email: patientEmail });
+        // Check if patient exists by phone (primary) or email
+        let patient = await User.findOne({ phone: patientPhone });
+
+        if (!patient && patientEmail) {
+            patient = await User.findOne({ email: patientEmail });
+        }
 
         // If patient doesn't exist, create a basic patient record
         if (!patient) {
+            // Generate Patient ID
+            const count = await User.countDocuments({ role: 'patient' });
+            const patientId = `P-${1001 + count}`;
+
             patient = await User.create({
                 fullName: patientName,
-                email: patientEmail,
+                email: patientEmail || undefined,
                 phone: patientPhone,
+                patientId,
                 password: Math.random().toString(36).slice(-8), // Random temp password
                 role: 'patient'
             });

@@ -35,7 +35,7 @@ const RegisterPage = () => {
         try {
             const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 fullName: formData.fullName,
-                email: formData.email,
+                email: formData.email || undefined,
                 phone: formData.phone,
                 password: formData.password,
                 role: activeRole,
@@ -46,10 +46,18 @@ const RegisterPage = () => {
             // Save user data/token
             localStorage.setItem('userInfo', JSON.stringify(response.data));
 
+            if (response.data.role === 'patient' && response.data.patientId) {
+                alert(`Registration Successful! 🎉\n\nYour Patient ID is: ${response.data.patientId}\n\nPlease save this ID. You can use it to login instead of email.`);
+            } else {
+                alert('Registration Successful! Redirecting...');
+            }
+
             // Redirect based on role
-            if (response.data.role === 'patient') navigate('/patient/dashboard');
-            else if (response.data.role === 'dentist') navigate('/dentist/dashboard');
-            else navigate('/');
+            setTimeout(() => {
+                if (response.data.role === 'patient') navigate('/patient/dashboard');
+                else if (response.data.role === 'dentist') navigate('/dentist/dashboard');
+                else navigate('/');
+            }, 1000);
 
         } catch (err) {
             console.error('Registration Error:', err);

@@ -31,10 +31,17 @@ const LoginPage = () => {
         setError('');
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-                email: formData.email,
+            const payload = {
                 password: formData.password
-            });
+            };
+
+            if (formData.email.includes('@')) {
+                payload.email = formData.email;
+            } else {
+                payload.patientId = formData.email;
+            }
+
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, payload);
 
             // Save user data/token
             localStorage.setItem('userInfo', JSON.stringify(response.data));
@@ -199,12 +206,12 @@ const LoginPage = () => {
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
                                 </div>
                                 <input
-                                    type="email"
+                                    type="text"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     className="w-full h-full bg-white border border-[#E5E7EB] rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none transition-all placeholder:text-[#9CA3AF]/60 text-sm text-[#111827]"
-                                    placeholder="e.g. patient@email.com"
+                                    placeholder={formData.role === 'Patient' ? "Patient ID (e.g. P-1001) or Email" : "Email Address"}
                                 />
                             </div>
 

@@ -93,9 +93,9 @@ const StaffBookAppointment = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.patientName || !formData.patientEmail || !formData.patientPhone ||
+        if (!formData.patientName || !formData.patientPhone ||
             !formData.date || !formData.time || !formData.service || !formData.dentist) {
-            alert('Please fill in all required fields, including selecting a dentist.');
+            alert('Please fill in required fields (Name, Phone, Date, Time, Service, Dentist).');
             return;
         }
 
@@ -183,13 +183,12 @@ const StaffBookAppointment = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email *</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email (Optional)</label>
                                 <input
                                     type="email"
                                     name="patientEmail"
                                     value={formData.patientEmail}
                                     onChange={handleChange}
-                                    required
                                     className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
                                     placeholder="patient@email.com"
                                 />

@@ -9,10 +9,16 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
         unique: true,
+        sparse: true, // Allow nulls for patients without email
         trim: true,
         lowercase: true
+    },
+    patientId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true
     },
     phone: {
         type: String,
