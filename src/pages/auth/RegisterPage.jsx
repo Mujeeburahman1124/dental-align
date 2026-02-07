@@ -102,11 +102,7 @@ const RegisterPage = () => {
                     </div>
 
                     {/* Footer Text */}
-                    <div className="relative z-10 mb-2">
-                        <p className="text-blue-100 text-[10px] font-bold tracking-[0.2em] uppercase">
-                            JOIN 20+ PATIENTS TODAY
-                        </p>
-                    </div>
+
                 </div>
 
                 {/* Right Column - 60% Width */}
