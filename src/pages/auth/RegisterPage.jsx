@@ -136,6 +136,14 @@ const RegisterPage = () => {
                                         {error}
                                     </div>
                                 )}
+
+                                {activeRole === 'patient' && (
+                                    <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100 mb-1 flex justify-between items-center">
+                                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wide">New Patient ID</span>
+                                        <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">Auto-generated</span>
+                                    </div>
+                                )}
+
                                 <div className="relative group h-10">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9CA3AF] group-focus-within:text-[#007AFF] transition-colors">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

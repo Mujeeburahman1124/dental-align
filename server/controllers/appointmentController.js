@@ -111,7 +111,7 @@ export const createWalkInAppointment = async (req, res) => {
         });
 
         // Populate patient and dentist info
-        await appointment.populate('patient', 'fullName email phone');
+        await appointment.populate('patient', 'fullName email phone patientId');
         if (dentist) {
             await appointment.populate('dentist', 'fullName specialization');
         }

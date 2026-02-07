@@ -109,9 +109,9 @@ const StaffBookAppointment = () => {
             };
 
             // Create appointment for walk-in patient
-            await axios.post(`${API_BASE_URL}/api/appointments/walk-in`, {
+            const { data } = await axios.post(`${API_BASE_URL}/api/appointments/walk-in`, {
                 patientName: formData.patientName,
-                patientEmail: formData.patientEmail,
+                patientEmail: formData.patientEmail || undefined,
                 patientPhone: formData.patientPhone,
                 date: formData.date,
                 time: formData.time,
@@ -122,7 +122,8 @@ const StaffBookAppointment = () => {
                 sendEmail: formData.sendEmail
             }, config);
 
-            alert(`Appointment booked successfully for ${formData.patientName}!`);
+            const pId = data.appointment?.patient?.patientId || "Generated";
+            alert(`Appointment booked successfully for ${formData.patientName}! 🎉\n\nPatient ID: ${pId}\n\nPlease share this ID with the patient.`);
 
             // Reset form
             setFormData({
@@ -168,6 +169,11 @@ const StaffBookAppointment = () => {
                             <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xs font-black">1</span>
                             Patient Information
                         </h2>
+
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
+                            <label className="block text-[10px] font-bold text-blue-800 uppercase mb-1">New Patient ID</label>
+                            <div className="text-sm font-bold text-blue-900">Auto-generated upon booking</div>
+                        </div>
 
                         <div className="grid md:grid-cols-2 gap-3">
                             <div>
