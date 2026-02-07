@@ -47,3 +47,15 @@ export const createNotification = async (userId, type, message, relatedId = null
         console.error('Create Notification Error:', error);
     }
 };
+
+// @desc    Simulate sending SMS (e.g. via Twilio)
+export const sendSMS = async (phone, message) => {
+    try {
+        console.log(`\n📱 [SMS SIMULATION] To: ${phone} | Message: "${message}"\n`);
+        // TODO: Integrate actual SMS gateway here (Twilio, Nexmo, etc.)
+        return true;
+    } catch (error) {
+        console.error('SMS Sending Error:', error);
+        return false;
+    }
+};

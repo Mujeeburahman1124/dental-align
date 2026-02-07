@@ -1,6 +1,6 @@
 import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
-import { createNotification } from './notificationController.js';
+import { createNotification, sendSMS } from './notificationController.js';
 
 // @desc    Book a new appointment
 // @route   POST /api/appointments
@@ -116,8 +116,12 @@ export const createWalkInAppointment = async (req, res) => {
             await appointment.populate('dentist', 'fullName specialization');
         }
 
-        // TODO: Send email notification if sendEmail is true
-        // This would require email service integration
+        // Send SMS notification
+        if (sendEmail && patientPhone) {
+            const message = `DentAlign: Appointment confirmed for ${reason} on ${new Date(date).toLocaleDateString()} at ${time}.`;
+            // Simulate SMS sending
+            await sendSMS(patientPhone, message);
+        }
 
         res.status(201).json({
             message: 'Appointment booked successfully',
@@ -193,12 +197,18 @@ export const createPublicAppointment = async (req, res) => {
         }
 
         // Trigger notification
+        const msgText = `Your appointment request for ${reason} on ${new Date(date).toLocaleDateString()} at ${time} has been received.`;
         await createNotification(
             patient._id,
             'appointment',
-            `Your appointment request for ${reason} on ${new Date(date).toLocaleDateString()} at ${time} has been received.`,
+            msgText,
             appointment._id
         );
+
+        // Send confirmation SMS
+        if (patientPhone) {
+            await sendSMS(patientPhone, `DentAlign: ${msgText}`);
+        }
 
         res.status(201).json({
             message: 'Appointment request sent successfully',
