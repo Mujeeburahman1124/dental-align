@@ -21,6 +21,8 @@ const StaffBookAppointment = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [dentists, setDentists] = useState([]);
+    const [bookedSlots, setBookedSlots] = useState([]);
 
     // Fetch dentists on load
     React.useEffect(() => {
