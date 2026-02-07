@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 
 const RegisterPage = () => {
     const [activeRole, setActiveRole] = useState('patient');
@@ -32,7 +33,7 @@ const RegisterPage = () => {
         setError('');
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/register', {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 fullName: formData.fullName,
                 email: formData.email,
                 phone: formData.phone,

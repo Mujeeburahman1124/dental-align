@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 
@@ -15,7 +16,7 @@ const StaffDashboard = () => {
     const fetchData = async () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const resAppt = await axios.get('http://localhost:5000/api/appointments/my-appointments', config);
+            const resAppt = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
             setAppointments(resAppt.data || []);
 
             const today = new Date().toISOString().split('T')[0];
@@ -39,7 +40,7 @@ const StaffDashboard = () => {
     const handleConfirm = async (id) => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.put(`http://localhost:5000/api/appointments/${id}`, { status: 'confirmed' }, config);
+            await axios.put(`${API_BASE_URL}/api/appointments/${id}`, { status: 'confirmed' }, config);
             fetchData();
         } catch (error) {
             alert('Update failed');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 const DigitalTreatmentRecord = () => {
   const user = JSON.parse(localStorage.getItem('userInfo')) || {};
@@ -20,7 +21,7 @@ const DigitalTreatmentRecord = () => {
         const config = {
           headers: { Authorization: `Bearer ${user.token}` }
         };
-        const { data } = await axios.get('http://localhost:5000/api/treatments/my-treatments', config);
+        const { data } = await axios.get(`${API_BASE_URL}/api/treatments/my-treatments`, config);
         setTreatments(data);
       } catch (error) {
         console.error('Error fetching treatments:', error);

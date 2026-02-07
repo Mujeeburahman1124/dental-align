@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import Navbar from '../../components/Navbar';
 
 const StaffBookAppointment = () => {
@@ -25,7 +26,7 @@ const StaffBookAppointment = () => {
     React.useEffect(() => {
         const fetchDentists = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5000/api/users/dentists');
+                const { data } = await axios.get(`${API_BASE_URL}/api/users/dentists`);
                 setDentists(data);
             } catch (error) {
                 console.error('Error fetching dentists:', error);
@@ -40,7 +41,7 @@ const StaffBookAppointment = () => {
             if (formData.date && formData.dentist) {
                 try {
                     const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                    const { data } = await axios.get(`http://localhost:5000/api/appointments/booked-slots?dentistId=${formData.dentist}&date=${formData.date}`, config);
+                    const { data } = await axios.get(`${API_BASE_URL}/api/appointments/booked-slots?dentistId=${formData.dentist}&date=${formData.date}`, config);
                     setBookedSlots(data);
                 } catch (error) {
                     console.error('Error checking availability:', error);
@@ -94,7 +95,7 @@ const StaffBookAppointment = () => {
             };
 
             // Create appointment for walk-in patient
-            await axios.post('http://localhost:5000/api/appointments/walk-in', {
+            await axios.post(`${API_BASE_URL}/api/appointments/walk-in`, {
                 patientName: formData.patientName,
                 patientEmail: formData.patientEmail,
                 patientPhone: formData.patientPhone,
@@ -244,10 +245,10 @@ const StaffBookAppointment = () => {
                                             onClick={() => !isBooked && setFormData({ ...formData, time: slot })}
                                             disabled={isBooked || (!formData.dentist || !formData.date)}
                                             className={`px-2 py-2 text-xs font-bold rounded-lg border transition-all ${formData.time === slot
-                                                    ? 'bg-indigo-600 text-white border-indigo-600'
-                                                    : isBooked
-                                                        ? 'bg-red-50 text-red-300 border-red-100 cursor-not-allowed'
-                                                        : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : isBooked
+                                                    ? 'bg-red-50 text-red-300 border-red-100 cursor-not-allowed'
+                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
                                                 }`}
                                         >
                                             {slot}

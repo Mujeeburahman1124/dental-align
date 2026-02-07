@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { Link, useNavigate } from 'react-router-dom';
 
 const AdminUsers = () => {
@@ -20,7 +21,7 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get('http://localhost:5000/api/users', config);
+            const { data } = await axios.get(`${API_BASE_URL}/api/users`, config);
             setUsers(data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -41,7 +42,7 @@ const AdminUsers = () => {
         if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.delete(`http://localhost:5000/api/users/${id}`, config);
+            await axios.delete(`${API_BASE_URL}/api/users/${id}`, config);
             setUsers(users.filter(u => u._id !== id));
         } catch (error) {
             alert(error.response?.data?.message || 'Delete failed');
@@ -53,7 +54,7 @@ const AdminUsers = () => {
         try {
             // Using register endpoint to create user
             const config = { headers: { 'Content-Type': 'application/json' } };
-            await axios.post('http://localhost:5000/api/auth/register', newUser, config);
+            await axios.post(`${API_BASE_URL}/api/auth/register`, newUser, config);
 
             alert('User created successfully');
             setShowModal(false);

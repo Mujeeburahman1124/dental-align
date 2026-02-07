@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import Header from '../../components/shared/Header';
 import Footer from '../../components/shared/Footer';
 
@@ -11,14 +12,14 @@ const MyAppointments = () => {
     const fetchAppointments = async () => {
       try {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        if (!userInfo) return;
+        if (userInfo) {
+          const config = {
+            headers: { Authorization: `Bearer ${userInfo.token}` }
+          };
 
-        const config = {
-          headers: { Authorization: `Bearer ${userInfo.token}` }
-        };
-
-        const { data } = await axios.get('http://localhost:5000/api/appointments/my-appointments', config);
-        setAppointments(data);
+          const { data } = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
+          setAppointments(data);
+        }
       } catch (error) {
         console.error('Error fetching appointments:', error);
       } finally {
@@ -67,7 +68,7 @@ const MyAppointments = () => {
                             try {
                               const userInfo = JSON.parse(localStorage.getItem('userInfo'));
                               const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-                              await axios.put(`http://localhost:5000/api/appointments/${app._id}`, { status: 'cancelled' }, config);
+                              await axios.put(`${API_BASE_URL}/api/appointments/${app._id}`, { status: 'cancelled' }, config);
                               setAppointments(appointments.filter(a => a._id !== app._id));
                               alert('Appointment cancelled successfully');
                             } catch (error) {

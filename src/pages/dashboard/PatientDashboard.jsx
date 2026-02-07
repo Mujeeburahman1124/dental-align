@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import Navbar from '../../components/Navbar';
 
 const PatientDashboard = () => {
@@ -13,11 +14,11 @@ const PatientDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const config = { headers: { Authorization: `Bearer ${user.token} ` } };
             const [resAppt, resSummary, resNotif] = await Promise.all([
-                axios.get('http://localhost:5000/api/appointments/my-appointments', config),
-                axios.get('http://localhost:5000/api/payments/summary', config),
-                axios.get('http://localhost:5000/api/notifications', config)
+                axios.get(`${API_BASE_URL} /api/appointments / my - appointments`, config),
+                axios.get(`${API_BASE_URL} /api/payments / summary`, config),
+                axios.get(`${API_BASE_URL} /api/notifications`, config)
             ]);
 
             if (resAppt.data?.length > 0) {
@@ -134,9 +135,9 @@ const PatientDashboard = () => {
                     <div className="space-y-3">
                         {notifications.length > 0 ? notifications.slice(0, 4).map(n => (
                             <div key={n._id} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0 ${n.type === 'appointment' ? 'bg-blue-100' :
+                                <div className={`w - 8 h - 8 rounded - lg flex items - center justify - center text - lg shrink - 0 ${n.type === 'appointment' ? 'bg-blue-100' :
                                         n.type === 'payment' ? 'bg-green-100' : 'bg-gray-100'
-                                    }`}>
+                                    } `}>
                                     {n.type === 'appointment' ? '📅' : n.type === 'payment' ? '💳' : 'ℹ️'}
                                 </div>
                                 <div className="flex-1 min-w-0">

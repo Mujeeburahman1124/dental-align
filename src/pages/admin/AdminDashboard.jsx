@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 
@@ -19,8 +20,8 @@ const AdminDashboard = () => {
     const fetchAdminData = async () => {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data: allAppts } = await axios.get('http://localhost:5000/api/appointments/my-appointments', config);
-        const { data: allPatients } = await axios.get('http://localhost:5000/api/users/patients', config);
+        const { data: allAppts } = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
+        const { data: allPatients } = await axios.get(`${API_BASE_URL}/api/users/patients`, config);
 
         const today = new Date().toISOString().split('T')[0];
         const todayAppts = allAppts.filter(a => a.date.split('T')[0] === today);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const DentistTreatmentRecord = () => {
@@ -30,7 +31,7 @@ const DentistTreatmentRecord = () => {
         const fetchPatients = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await axios.get('http://localhost:5000/api/users/patients', config);
+                const { data } = await axios.get(`${API_BASE_URL}/api/users/patients`, config);
                 setPatients(data);
 
                 if (location.state?.patientId) {
@@ -52,7 +53,7 @@ const DentistTreatmentRecord = () => {
         const fetchTreatments = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await axios.get(`http://localhost:5000/api/treatments/patient/${selectedPatient._id}`, config);
+                const { data } = await axios.get(`${API_BASE_URL}/api/treatments/patient/${selectedPatient._id}`, config);
                 setTreatments(data);
             } catch (error) {
                 console.error('Fetch Treatments Error:', error);
@@ -71,7 +72,7 @@ const DentistTreatmentRecord = () => {
                 cost: Number(newRecord.cost) || 0,
                 attachments: newRecord.attachmentUrl ? [{ name: 'X-Ray Scan', url: newRecord.attachmentUrl, type: 'xray' }] : []
             };
-            const { data } = await axios.post('http://localhost:5000/api/treatments', payload, config);
+            const { data } = await axios.post(`${API_BASE_URL}/api/treatments`, payload, config);
             setTreatments([data, ...treatments]);
             setShowModal(false);
             setNewRecord({ title: '', procedures: '', notes: '', prescriptions: '', cost: '', attachmentUrl: '' });

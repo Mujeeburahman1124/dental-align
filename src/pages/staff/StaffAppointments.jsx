@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 
 const StaffAppointments = () => {
@@ -12,8 +13,8 @@ const StaffAppointments = () => {
 
     const fetchAppointments = async () => {
         try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get('http://localhost:5000/api/appointments/my-appointments', config);
+            const config = { headers: { Authorization: `Bearer ${user.token} ` } };
+            const { data } = await axios.get(`${API_BASE_URL} /api/appointments / my - appointments`, config);
             setAppointments(data);
         } catch (error) {
             console.error('Error:', error);
@@ -28,8 +29,8 @@ const StaffAppointments = () => {
 
     const handleConfirm = async (id) => {
         try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.put(`http://localhost:5000/api/appointments/${id}`, { status: 'confirmed' }, config);
+            const config = { headers: { Authorization: `Bearer ${user.token} ` } };
+            await axios.put(`${API_BASE_URL} /api/appointments / ${id} `, { status: 'confirmed' }, config);
             fetchAppointments();
             alert('Appointment confirmed!');
         } catch (error) {
@@ -40,8 +41,8 @@ const StaffAppointments = () => {
     const handleCancel = async (id) => {
         if (!confirm('Are you sure you want to cancel this appointment?')) return;
         try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.put(`http://localhost:5000/api/appointments/${id}`, { status: 'cancelled' }, config);
+            const config = { headers: { Authorization: `Bearer ${user.token} ` } };
+            await axios.put(`${API_BASE_URL} /api/appointments / ${id} `, { status: 'cancelled' }, config);
             fetchAppointments();
             alert('Appointment cancelled!');
         } catch (error) {
@@ -84,19 +85,19 @@ const StaffAppointments = () => {
                 <div className="bg-white rounded-xl border border-gray-100 p-1 mb-6 flex gap-2">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                        className={`flex - 1 px - 4 py - 2 rounded - lg text - sm font - bold transition - all ${filter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'} `}
                     >
                         All ({appointments.length})
                     </button>
                     <button
                         onClick={() => setFilter('pending')}
-                        className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'pending' ? 'bg-orange-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                        className={`flex - 1 px - 4 py - 2 rounded - lg text - sm font - bold transition - all ${filter === 'pending' ? 'bg-orange-600 text-white' : 'text-gray-600 hover:bg-gray-100'} `}
                     >
                         Pending ({appointments.filter(a => a.status === 'pending').length})
                     </button>
                     <button
                         onClick={() => setFilter('confirmed')}
-                        className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'confirmed' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                        className={`flex - 1 px - 4 py - 2 rounded - lg text - sm font - bold transition - all ${filter === 'confirmed' ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'} `}
                     >
                         Confirmed ({appointments.filter(a => a.status === 'confirmed').length})
                     </button>
@@ -122,11 +123,11 @@ const StaffAppointments = () => {
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                    <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${appt.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                                        appt.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                                            appt.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-gray-100 text-gray-700'
-                                        }`}>
+                                    <span className={`px - 3 py - 1.5 rounded - lg text - xs font - bold ${appt.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                                            appt.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                appt.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-gray-100 text-gray-700'
+                                        } `}>
                                         {appt.status.toUpperCase()}
                                     </span>
                                     {appt.status === 'pending' && (

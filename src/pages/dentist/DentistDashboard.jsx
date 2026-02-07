@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import Navbar from '../../components/Navbar';
 
 const DentistDashboard = () => {
@@ -13,16 +14,20 @@ const DentistDashboard = () => {
   useEffect(() => {
     const fetchDentistData = async () => {
       try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.get('http://localhost:5000/api/appointments/my-appointments', config);
-        setAppointments(data);
+        let fetchedAppointments = [];
+        if (user && user.token) { // Ensure user and token exist before making the call
+          const config = { headers: { Authorization: `Bearer ${user.token}` } };
+          const { data } = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
+          setAppointments(data);
+          fetchedAppointments = data;
+        }
 
         const today = new Date().toISOString().split('T')[0];
-        const todayAppts = data.filter(a => a.date.split('T')[0] === today);
+        const todayAppts = fetchedAppointments.filter(a => a.date.split('T')[0] === today);
 
         setStats({
           todayCount: todayAppts.length,
-          totalPatients: [...new Set(data.map(a => a.patient?._id))].length
+          totalPatients: [...new Set(fetchedAppointments.map(a => a.patient?._id))].length
         });
       } catch (error) {
         console.error('Error:', error);

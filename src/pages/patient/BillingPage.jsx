@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import Navbar from '../../components/Navbar';
 
 const BillingPage = () => {
@@ -22,9 +23,9 @@ const BillingPage = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const [resAppt, resTreat, resHistory] = await Promise.all([
-                axios.get('http://localhost:5000/api/appointments/my-appointments', config),
-                axios.get('http://localhost:5000/api/treatments/my-treatments', config),
-                axios.get('http://localhost:5000/api/payments/my-payments', config)
+                axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config),
+                axios.get(`${API_BASE_URL}/api/treatments/my-treatments`, config),
+                axios.get(`${API_BASE_URL}/api/payments/my-payments`, config)
             ]);
 
             setUnpaidAppointments(resAppt.data.filter(a => !a.isFeePaid && a.status !== 'cancelled'));
@@ -59,7 +60,7 @@ const BillingPage = () => {
                 paymentMethod: 'card'
             };
 
-            await axios.post('http://localhost:5000/api/payments', paymentData, config);
+            await axios.post(`${API_BASE_URL}/api/payments`, paymentData, config);
             setPaymentSuccess(true);
             setTimeout(() => {
                 setShowPaymentModal(false);

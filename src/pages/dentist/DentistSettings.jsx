@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 import { Link, useNavigate } from 'react-router-dom';
 
 const DentistSettings = () => {
@@ -29,7 +30,7 @@ const DentistSettings = () => {
                     Authorization: `Bearer ${user.token}`
                 }
             };
-            const { data } = await axios.put('http://localhost:5000/api/users/profile', user, config);
+            const { data } = await axios.put(`${API_BASE_URL}/api/users/profile`, user, config);
             // Merge with existing token
             const updatedUser = { ...data, token: user.token };
             localStorage.setItem('userInfo', JSON.stringify(updatedUser));
