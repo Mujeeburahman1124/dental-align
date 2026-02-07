@@ -14,6 +14,7 @@ const LoginPage = () => {
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
     const handleInputChange = (e) => {
@@ -38,17 +39,20 @@ const LoginPage = () => {
             // Save user data/token
             localStorage.setItem('userInfo', JSON.stringify(response.data));
 
-            // Redirect based on role
-            if (response.data.role === 'patient') navigate('/patient/dashboard');
-            else if (response.data.role === 'dentist') navigate('/dentist/dashboard');
-            else if (response.data.role === 'staff') navigate('/staff/dashboard');
-            else if (response.data.role === 'admin') navigate('/admin/dashboard');
-            else navigate('/');
+            setSuccess('Login Successful! Redirecting...');
+
+            setTimeout(() => {
+                // Redirect based on role
+                if (response.data.role === 'patient') navigate('/patient/dashboard');
+                else if (response.data.role === 'dentist') navigate('/dentist/dashboard');
+                else if (response.data.role === 'staff') navigate('/staff/dashboard');
+                else if (response.data.role === 'admin') navigate('/admin/dashboard');
+                else navigate('/');
+            }, 1500);
 
         } catch (err) {
             console.error('Login Error:', err);
             setError(err.response?.data?.message || err.message || 'Connection failed. Is the server running?');
-        } finally {
             setLoading(false);
         }
     };
@@ -182,6 +186,12 @@ const LoginPage = () => {
                             {error && (
                                 <div className="bg-red-50 text-red-600 text-[10px] font-bold p-2 rounded-lg border border-red-100 animate-fadeIn">
                                     {error}
+                                </div>
+                            )}
+                            {success && (
+                                <div className="bg-green-50 text-green-600 text-[10px] font-bold p-2 rounded-lg border border-green-100 animate-fadeIn mb-2 flex items-center gap-2">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                                    {success}
                                 </div>
                             )}
                             <div className="relative group h-10">
