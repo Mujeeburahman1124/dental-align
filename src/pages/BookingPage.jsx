@@ -26,12 +26,7 @@ const BookingPage = () => {
         'Root Canal', 'Tooth Extraction', 'Dental Implant', 'Orthodontics', 'Emergency Care'
     ];
 
-    const dentists = [
-        { id: '1', name: 'Dr. Sarah Johnson' },
-        { id: '2', name: 'Dr. Muksith Ahmed' },
-        { id: '3', name: 'Dr. Emily Chen' }
-    ];
-
+    const [dentists, setDentists] = useState([]);
     const [timeSlots, setTimeSlots] = useState([
         '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
         '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
@@ -48,7 +43,18 @@ const BookingPage = () => {
                 console.error('Error fetching settings:', error);
             }
         };
+
+        const fetchDentists = async () => {
+            try {
+                const { data } = await axios.get(`${API_BASE_URL}/api/users/dentists`);
+                setDentists(data);
+            } catch (error) {
+                console.error('Error fetching dentists:', error);
+            }
+        };
+
         fetchSettings();
+        fetchDentists();
     }, []);
 
     const handleChange = (e) => {
@@ -78,11 +84,26 @@ const BookingPage = () => {
                 }
             };
 
+            // Handle "Any available" dentist selection
+            let selectedDentistId = formData.dentist;
+
+            if (!selectedDentistId && dentists.length > 0) {
+                // Randomly select a dentist if "Any available" is chosen
+                const randomIndex = Math.floor(Math.random() * dentists.length);
+                selectedDentistId = dentists[randomIndex]._id;
+            }
+
+            if (!selectedDentistId) {
+                alert('No dentists available at the moment. Please try again later.');
+                setLoading(false);
+                return;
+            }
+
             await axios.post(`${API_BASE_URL}/api/appointments`, {
                 date: formData.date,
                 time: formData.time,
                 reason: formData.service,
-                dentist: formData.dentist || null,
+                dentistId: selectedDentistId,
                 notes: formData.notes,
                 status: 'pending'
             }, config);
@@ -224,7 +245,7 @@ const BookingPage = () => {
                             >
                                 <option value="">Any available</option>
                                 {dentists.map(dentist => (
-                                    <option key={dentist.id} value={dentist.name}>{dentist.name}</option>
+                                    <option key={dentist._id} value={dentist._id}>{dentist.fullName}</option>
                                 ))}
                             </select>
                         </div>
