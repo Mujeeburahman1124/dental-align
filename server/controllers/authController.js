@@ -43,6 +43,8 @@ export const registerUser = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                slmcNumber: user.slmcNumber,
+                specialization: user.specialization,
                 token: generateToken(user._id),
             });
         } else {
@@ -70,6 +72,8 @@ export const loginUser = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                slmcNumber: user.slmcNumber,
+                specialization: user.specialization,
                 token: generateToken(user._id),
             });
         } else {

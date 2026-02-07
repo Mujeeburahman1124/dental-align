@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 const DentistSettings = () => {
     const [user, setUser] = useState(JSON.parse(localStorage.getItem('userInfo')) || {
-        fullName: 'Dr. Muksith',
+        fullName: 'Dr. Dentist',
         email: 'dentist@dentalalign.com',
         phone: '0777654321',
-        slmc: 'SLMC-8821',
+        slmcNumber: '',
         specialization: 'Cosmetic Dentistry'
     });
     const navigate = useNavigate();
@@ -18,6 +19,26 @@ const DentistSettings = () => {
 
     const handleChange = (e) => {
         setUser({ ...user, [e.target.name]: e.target.value });
+    };
+
+    const handleSave = async () => {
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.token}`
+                }
+            };
+            const { data } = await axios.put('http://localhost:5000/api/users/profile', user, config);
+            // Merge with existing token
+            const updatedUser = { ...data, token: user.token };
+            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            alert('Profile Updated Successfully!');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to update profile');
+        }
     };
 
     return (
@@ -107,7 +128,8 @@ const DentistSettings = () => {
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">SLMC Registration</label>
                                         <input
-                                            name="slmc" value={user.slmc || 'SLMC-PENDING'} onChange={handleChange}
+                                            name="slmcNumber" value={user.slmcNumber || ''} onChange={handleChange}
+                                            placeholder="SLMC-XXXX"
                                             className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all shadow-sm"
                                         />
                                     </div>
@@ -148,7 +170,7 @@ const DentistSettings = () => {
                                     </div>
                                 </div>
                                 <div className="mt-10 flex justify-end">
-                                    <button className="bg-[#007AFF] text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-[#0066D6] transition-all transform hover:scale-[1.02]">
+                                    <button onClick={handleSave} className="bg-[#007AFF] text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-[#0066D6] transition-all transform hover:scale-[1.02]">
                                         Save All Changes
                                     </button>
                                 </div>
