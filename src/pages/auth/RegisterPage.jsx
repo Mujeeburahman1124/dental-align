@@ -51,7 +51,8 @@ const RegisterPage = () => {
             else navigate('/');
 
         } catch (err) {
-            setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+            console.error('Registration Error:', err);
+            setError(err.response?.data?.message || err.message || 'Connection failed. Is the server running?');
         } finally {
             setLoading(false);
         }
