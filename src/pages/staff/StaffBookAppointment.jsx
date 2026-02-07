@@ -309,7 +309,7 @@ const StaffBookAppointment = () => {
                             ></textarea>
                         </div>
 
-                        {/* Email Notification Option */}
+                        {/* SMS Notification Option */}
                         <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg">
                             <input
                                 type="checkbox"
@@ -320,7 +320,7 @@ const StaffBookAppointment = () => {
                                 className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                             />
                             <label htmlFor="sendEmail" className="text-xs font-bold text-gray-700">
-                                Send confirmation email to patient
+                                Send confirmation SMS to patient
                             </label>
                         </div>
                     </div>
@@ -376,7 +376,7 @@ const StaffBookAppointment = () => {
                     </div>
 
                     <p className="text-xs text-gray-500 text-center">
-                        Appointment will be auto-confirmed. {formData.sendEmail && 'Patient will receive email notification.'}
+                        Appointment will be auto-confirmed. {formData.sendEmail && 'Patient will receive SMS notification.'}
                     </p>
                 </form>
             </div>
