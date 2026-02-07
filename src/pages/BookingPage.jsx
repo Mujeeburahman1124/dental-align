@@ -64,11 +64,8 @@ const BookingPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!user) {
-            alert('Please login to book an appointment');
-            navigate('/login');
-            return;
-        }
+        // Guest booking allowed
+        // if (!user) { ... } removed
 
         if (!formData.date || !formData.time || !formData.service) {
             alert('Please fill in all required fields');
@@ -77,18 +74,10 @@ const BookingPage = () => {
 
         setLoading(true);
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.token}`
-                }
-            };
-
             // Handle "Any available" dentist selection
             let selectedDentistId = formData.dentist;
 
             if (!selectedDentistId && dentists.length > 0) {
-                // Randomly select a dentist if "Any available" is chosen
                 const randomIndex = Math.floor(Math.random() * dentists.length);
                 selectedDentistId = dentists[randomIndex]._id;
             }
@@ -99,17 +88,46 @@ const BookingPage = () => {
                 return;
             }
 
-            await axios.post(`${API_BASE_URL}/api/appointments`, {
-                date: formData.date,
-                time: formData.time,
-                reason: formData.service,
-                dentistId: selectedDentistId,
-                notes: formData.notes,
-                status: 'pending'
-            }, config);
+            let response;
 
-            alert('Appointment booked successfully! 🎉');
-            navigate('/patient/dashboard');
+            // Authenticated Booking
+            if (user) {
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${user.token}`
+                    }
+                };
+                response = await axios.post(`${API_BASE_URL}/api/appointments`, {
+                    date: formData.date,
+                    time: formData.time,
+                    reason: formData.service,
+                    dentistId: selectedDentistId,
+                    notes: formData.notes,
+                    // status handled by backend
+                }, config);
+
+                alert('Appointment booked successfully! 🎉\nYou can view it in your dashboard.');
+                navigate('/patient/dashboard');
+            }
+            // Guest / Public Booking
+            else {
+                response = await axios.post(`${API_BASE_URL}/api/appointments/public`, {
+                    patientName: formData.patientName,
+                    patientEmail: formData.patientEmail || undefined,
+                    patientPhone: formData.patientPhone,
+                    date: formData.date,
+                    time: formData.time,
+                    reason: formData.service,
+                    dentist: selectedDentistId,
+                    notes: formData.notes
+                });
+
+                const pId = response.data.appointment?.patient?.patientId || "Generated";
+                alert(`Appointment Request Sent! 🎉\n\nYour Patient ID is: ${pId}\n\nPlease save this ID. You can use it to login and check your status.`);
+                navigate('/login');
+            }
+
         } catch (error) {
             console.error('Booking error:', error);
             alert(error.response?.data?.message || 'Failed to book appointment');
@@ -141,6 +159,13 @@ const BookingPage = () => {
                             Patient Info
                         </h2>
 
+                        {!user && (
+                            <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 mb-2 mt-2 flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wide">New Patient ID</span>
+                                <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">Auto-generated</span>
+                            </div>
+                        )}
+
                         <div className="grid md:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Full Name *</label>
@@ -155,13 +180,12 @@ const BookingPage = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email *</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email (Optional)</label>
                                 <input
                                     type="email"
                                     name="patientEmail"
                                     value={formData.patientEmail}
                                     onChange={handleChange}
-                                    required
                                     className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
                                     placeholder="your@email.com"
                                 />

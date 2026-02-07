@@ -131,6 +131,86 @@ export const createWalkInAppointment = async (req, res) => {
     }
 };
 
+// @desc    Book appointment for public/guest patient
+// @route   POST /api/appointments/public
+// @access  Public
+export const createPublicAppointment = async (req, res) => {
+    try {
+        const { patientName, patientEmail, patientPhone, date, time, reason, dentist, notes } = req.body;
+
+        // Validate required fields (Email is optional)
+        if (!patientName || !patientPhone || !date || !time || !reason) {
+            return res.status(400).json({ message: 'Please provide required details (Name, Phone, Date, Time, Service)' });
+        }
+
+        // Check if patient exists by phone (primary) or email
+        let patient = await User.findOne({ phone: patientPhone });
+
+        if (!patient && patientEmail) {
+            patient = await User.findOne({ email: patientEmail });
+        }
+
+        // If patient doesn't exist, create a basic patient record
+        if (!patient) {
+            // Generate Patient ID
+            const count = await User.countDocuments({ role: 'patient' });
+            const patientId = `P-${1001 + count}`;
+
+            patient = await User.create({
+                fullName: patientName,
+                email: patientEmail || undefined,
+                phone: patientPhone,
+                patientId,
+                password: Math.random().toString(36).slice(-8), // Random temp password
+                role: 'patient'
+            });
+        }
+
+        // Verify dentist exists if provided
+        let dentistObj = null;
+        if (dentist) {
+            dentistObj = await User.findById(dentist);
+        }
+
+        // Create appointment
+        const appointment = await Appointment.create({
+            patient: patient._id,
+            dentist: dentist || null,
+            date,
+            time,
+            reason,
+            serviceName: reason,
+            estimatedCost: 0,
+            status: 'pending', // Online bookings are pending by default
+            notes: notes || '',
+            isFeePaid: false
+        });
+
+        // Populate patient info for response
+        await appointment.populate('patient', 'fullName email phone patientId');
+        if (dentist) {
+            await appointment.populate('dentist', 'fullName specialization');
+        }
+
+        // Trigger notification
+        await createNotification(
+            patient._id,
+            'appointment',
+            `Your appointment request for ${reason} on ${new Date(date).toLocaleDateString()} at ${time} has been received.`,
+            appointment._id
+        );
+
+        res.status(201).json({
+            message: 'Appointment request sent successfully',
+            appointment
+        });
+
+    } catch (error) {
+        console.error('Public booking error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 // @desc    Get user appointments
 // @route   GET /api/appointments/my-appointments
 // @access  Private
