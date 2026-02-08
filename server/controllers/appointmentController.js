@@ -83,8 +83,13 @@ export const createWalkInAppointment = async (req, res) => {
         // If patient doesn't exist, create a basic patient record
         if (!patient) {
             // Generate Patient ID
-            const count = await User.countDocuments({ role: 'patient' });
-            const patientId = `P-${1001 + count}`;
+            // Generate Patient ID
+            const lastPatient = await User.findOne({ role: 'patient' }, { patientId: 1 }).sort({ createdAt: -1 });
+            let patientId = 'P-1001';
+            if (lastPatient && lastPatient.patientId) {
+                const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
+                patientId = `P-${lastIdNum + 1}`;
+            }
 
             patient = await User.create({
                 fullName: patientName,
@@ -157,8 +162,13 @@ export const createPublicAppointment = async (req, res) => {
         // If patient doesn't exist, create a basic patient record
         if (!patient) {
             // Generate Patient ID
-            const count = await User.countDocuments({ role: 'patient' });
-            const patientId = `P-${1001 + count}`;
+            // Generate Patient ID
+            const lastPatient = await User.findOne({ role: 'patient' }, { patientId: 1 }).sort({ createdAt: -1 });
+            let patientId = 'P-1001';
+            if (lastPatient && lastPatient.patientId) {
+                const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
+                patientId = `P-${lastIdNum + 1}`;
+            }
 
             patient = await User.create({
                 fullName: patientName,

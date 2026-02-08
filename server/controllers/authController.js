@@ -31,9 +31,13 @@ export const registerUser = async (req, res) => {
         // Generate Patient ID if role is patient
         let patientId = undefined;
         if (!role || role === 'patient') {
-            const count = await User.countDocuments({ role: 'patient' });
-            // Simple ID generation: P-1000 + count. In production, use more robust method.
-            patientId = `P-${1001 + count}`;
+            const lastPatient = await User.findOne({ role: 'patient' }, { patientId: 1 }).sort({ createdAt: -1 });
+            if (lastPatient && lastPatient.patientId) {
+                const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
+                patientId = `P-${lastIdNum + 1}`;
+            } else {
+                patientId = 'P-1001';
+            }
         }
 
         // Create user

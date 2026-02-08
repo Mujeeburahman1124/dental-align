@@ -19,12 +19,14 @@ const StaffDashboard = () => {
             const resAppt = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
             setAppointments(resAppt.data || []);
 
+            const resPatients = await axios.get(`${API_BASE_URL}/api/users/patients`, config);
+
             const today = new Date().toISOString().split('T')[0];
             const todayAppts = resAppt.data.filter(a => a.date.split('T')[0] === today);
             setStats({
                 todayCount: todayAppts.length,
                 pendingConfirmation: resAppt.data.filter(a => a.status === 'pending').length,
-                totalPatients: [...new Set(resAppt.data.map(a => a.patient?._id))].length
+                totalPatients: resPatients.data.length
             });
         } catch (error) {
             console.error('Error:', error);
