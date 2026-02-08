@@ -84,7 +84,11 @@ export const createWalkInAppointment = async (req, res) => {
         if (!patient) {
             // Generate Patient ID
             // Generate Patient ID
-            const lastPatient = await User.findOne({ role: 'patient' }, { patientId: 1 }).sort({ createdAt: -1 });
+            const lastPatient = await User.findOne({
+                role: 'patient',
+                patientId: { $exists: true, $ne: null }
+            }).sort({ createdAt: -1 });
+
             let patientId = 'P-1001';
             if (lastPatient && lastPatient.patientId) {
                 const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
@@ -163,7 +167,11 @@ export const createPublicAppointment = async (req, res) => {
         if (!patient) {
             // Generate Patient ID
             // Generate Patient ID
-            const lastPatient = await User.findOne({ role: 'patient' }, { patientId: 1 }).sort({ createdAt: -1 });
+            const lastPatient = await User.findOne({
+                role: 'patient',
+                patientId: { $exists: true, $ne: null }
+            }).sort({ createdAt: -1 });
+
             let patientId = 'P-1001';
             if (lastPatient && lastPatient.patientId) {
                 const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
