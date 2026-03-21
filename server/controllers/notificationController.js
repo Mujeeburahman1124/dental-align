@@ -1,4 +1,7 @@
 import Notification from '../models/Notification.js';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // @desc    Get user notifications
 // @route   GET /api/notifications
@@ -56,6 +59,38 @@ export const sendSMS = async (phone, message) => {
         return true;
     } catch (error) {
         console.error('SMS Sending Error:', error);
+        return false;
+    }
+};
+// @desc    Send Email utility
+export const sendEmail = async (email, subject, message) => {
+    try {
+        // Log locally for debugging
+        console.log(`\n📧 [EMAIL SIMULATION] To: ${email} | Subject: "${subject}" | Message: "${message}"\n`);
+
+        // Create a transporter (using a safe mock/console logger or real SMTP)
+        // For a production-ready student project, we include the real setup code commented
+        /*
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: subject,
+            text: message
+        };
+
+        await transporter.sendMail(mailOptions);
+        */
+        return true;
+    } catch (error) {
+        console.error('Email Sending Error:', error);
         return false;
     }
 };

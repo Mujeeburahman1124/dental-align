@@ -5,37 +5,56 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 
 const StaffDashboard = () => {
-    const user = JSON.parse(localStorage.getItem('userInfo')) || { fullName: 'Staff Member' };
+    const user = JSON.parse(localStorage.getItem('userInfo')) || { fullName: 'Staff' };
     const navigate = useNavigate();
     const [appointments, setAppointments] = useState([]);
-    const [stats, setStats] = useState({ todayCount: 0, pendingConfirmation: 0, totalPatients: 0 });
+    const [stats, setStats] = useState({ todayCount: 0, pendingConfirmation: 0, totalPatients: 0, todayRevenue: 0, monthRevenue: 0 });
     const [loading, setLoading] = useState(true);
-    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [selectedAppt, setSelectedAppt] = useState(null);
+    const [error, setError] = useState(null);
 
     const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const resAppt = await axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config);
+            const [resAppt, resPatients, resTreatments] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/appointments/my-appointments`, config),
+                axios.get(`${API_BASE_URL}/api/users/patients`, config),
+                axios.get(`${API_BASE_URL}/api/treatments/all`, config).catch(() => ({ data: [] }))
+            ]);
+
             setAppointments(resAppt.data || []);
 
-            const resPatients = await axios.get(`${API_BASE_URL}/api/users/patients`, config);
-
             const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
             const todayAppts = resAppt.data.filter(a => a.date.split('T')[0] === today);
+            const todayTreatments = resTreatments.data.filter(t => t.date && t.date.split('T')[0] === today);
+            const monthTreatments = resTreatments.data.filter(t => t.date && new Date(t.date) >= monthStart);
+            const todayRevenue = todayTreatments.reduce((sum, t) => sum + (t.cost || 0), 0);
+            const monthRevenue = monthTreatments.reduce((sum, t) => sum + (t.cost || 0), 0);
+
             setStats({
                 todayCount: todayAppts.length,
                 pendingConfirmation: resAppt.data.filter(a => a.status === 'pending').length,
-                totalPatients: resPatients.data.length
+                totalPatients: resPatients.data.length,
+                todayRevenue,
+                monthRevenue
             });
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Fetch error:', error);
+            setError('Failed to load dashboard data. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        if (!user.token) {
+            navigate('/login');
+            return;
+        }
         fetchData();
     }, [user.token]);
 
@@ -45,171 +64,152 @@ const StaffDashboard = () => {
             await axios.put(`${API_BASE_URL}/api/appointments/${id}`, { status: 'confirmed' }, config);
             fetchData();
         } catch (error) {
-            alert('Update failed');
+            alert('Failed to confirm appointment');
         }
     };
 
-    const handleGenerateInvoice = (appt) => {
-        setSelectedAppt(appt);
-        setShowInvoiceModal(true);
-    };
-
     if (loading) return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-10">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-xs font-semibold text-slate-500 uppercase tracking-widest">Loading Records...</p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 font-inter">
+        <div className="min-h-screen bg-slate-50 font-sans pb-12">
             <Navbar />
 
-            <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
-                {/* Header - Compact */}
-                <div className="mb-6">
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900">Staff Dashboard</h1>
-                    <p className="text-sm text-gray-600">Manage clinic operations</p>
-                </div>
-
-                {/* Stats - Compact */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
-                    <div className="bg-white p-4 rounded-xl border border-gray-100">
-                        <div className="text-xs font-bold text-gray-500 mb-1">Today's Visits</div>
-                        <div className="text-2xl md:text-3xl font-black text-gray-900">{stats.todayCount}</div>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Clean SaaS Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
+                        <p className="text-sm text-slate-500">Welcome back, {user.fullName.split(' ')[0]}</p>
                     </div>
-                    <div className="bg-white p-4 rounded-xl border border-gray-100">
-                        <div className="text-xs font-bold text-gray-500 mb-1">Pending</div>
-                        <div className="text-2xl md:text-3xl font-black text-orange-600">{stats.pendingConfirmation}</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
-                        <div className="text-xs font-bold text-gray-500 mb-1">Total Patients</div>
-                        <div className="text-2xl md:text-3xl font-black text-green-600">{stats.totalPatients}</div>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => navigate('/staff/book-appointment')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm active:transform active:scale-95 flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                            New Appointment
+                        </button>
                     </div>
                 </div>
 
-                {/* Quick Actions - Compact */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                    <Link to="/staff/appointments" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
-                        <div className="text-2xl mb-2">📅</div>
-                        <div className="text-xs font-bold text-gray-900">Appointments</div>
-                    </Link>
-                    <Link to="/staff/patients" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
-                        <div className="text-2xl mb-2">👥</div>
-                        <div className="text-xs font-bold text-gray-900">Patients</div>
-                    </Link>
-                    <Link to="/staff/billing" className="bg-white p-4 rounded-xl border border-gray-100 text-center hover:shadow-lg transition-all">
-                        <div className="text-2xl mb-2">📝</div>
-                        <div className="text-xs font-bold text-gray-900">Billing</div>
-                    </Link>
-                    <Link to="/staff/book-appointment" className="bg-indigo-600 p-4 rounded-xl text-center hover:shadow-lg transition-all">
-                        <div className="text-2xl mb-2">➕</div>
-                        <div className="text-xs font-bold text-white">Book for Patient</div>
-                    </Link>
+                {/* Grid stats - Refined for mobile stacking */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {[
+                        { label: "Today's Appointments", value: stats.todayCount, icon: "📅", color: "text-blue-600", bg: "bg-blue-50" },
+                        { label: "Pending Approvals", value: stats.pendingConfirmation, icon: "⏳", color: "text-amber-600", bg: "bg-amber-50" },
+                        { label: "Active Patients", value: stats.totalPatients, icon: "👥", color: "text-emerald-600", bg: "bg-emerald-50" },
+                        { label: "Clinic Revenue", value: `Rs. ${stats.todayRevenue}`, icon: "💰", color: "text-slate-600", bg: "bg-slate-50" }
+                    ].map((s, i) => (
+                        <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-all">
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{s.label}</p>
+                                <h3 className="text-2xl font-bold text-slate-900">{s.value}</h3>
+                            </div>
+                            <div className={`${s.bg} ${s.color} w-10 h-10 rounded-lg flex items-center justify-center text-lg`}>
+                                {s.icon}
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
-                {/* Appointment Queue - Compact */}
-                <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-black text-gray-900">Appointment Queue</h2>
-                        <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Live</span>
-                    </div>
-                    <div className="space-y-2">
-                        {appointments.length > 0 ? appointments.map(appt => (
-                            <div key={appt._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all">
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center font-bold text-indigo-600 shrink-0">
-                                        {appt.patient?.fullName ? appt.patient.fullName[0] : 'P'}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Recent Sessions List */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Recent Activity</h2>
+                                <Link to="/staff/appointments" className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">View All →</Link>
+                            </div>
+                            <div className="divide-y divide-slate-100 h-[480px] overflow-y-auto custom-scrollbar">
+                                {appointments.length > 0 ? appointments.slice(0, 10).map(appt => (
+                                    <div key={appt._id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors group">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border border-slate-200">
+                                                {appt.patient?.fullName?.[0] || 'P'}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-slate-900 truncate">{appt.patient?.fullName || 'Walk-in'}</p>
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${appt.isFeePaid ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
+                                                        {appt.isFeePaid ? 'Paid' : 'Due'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-500 mt-0.5 font-medium">{appt.time} • {appt.reason}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {appt.status === 'pending' ? (
+                                                <button 
+                                                    onClick={() => handleConfirm(appt._id)}
+                                                    className="w-full sm:w-auto px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-sm"
+                                                >
+                                                    Confirm
+                                                </button>
+                                            ) : (
+                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase text-center border ${
+                                                    appt.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                                    appt.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                }`}>
+                                                    {appt.status}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="font-bold text-sm text-gray-900 truncate">{appt.patient?.fullName || 'Guest'}</div>
-                                        <div className="text-xs text-gray-600 truncate">{appt.reason} • {appt.time}</div>
+                                )) : (
+                                    <div className="py-20 text-center px-4">
+                                        <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100 text-xl">🗓️</div>
+                                        <h3 className="text-sm font-bold text-slate-900 uppercase">No Reservations</h3>
+                                        <p className="text-xs text-slate-400 mt-1">Schedules are clear for today.</p>
                                     </div>
-                                </div>
-                                <div className="flex gap-2 shrink-0 ml-2">
-                                    {appt.status === 'pending' && (
-                                        <button onClick={() => handleConfirm(appt._id)} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold">
-                                            Confirm
-                                        </button>
-                                    )}
-                                    {appt.status === 'completed' && !appt.isFeePaid && (
-                                        <button onClick={() => handleGenerateInvoice(appt)} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold">
-                                            Bill
-                                        </button>
-                                    )}
-                                    {appt.status === 'confirmed' && (
-                                        <span className="px-3 py-1.5 text-xs font-bold text-green-600 bg-green-50 rounded-lg">Active</span>
-                                    )}
-                                </div>
+                                )}
                             </div>
-                        )) : (
-                            <div className="text-center py-8 text-gray-500">
-                                <span className="block text-3xl mb-2">📋</span>
-                                <p className="text-sm">No appointments today</p>
-                            </div>
-                        )}
+                        </div>
                     </div>
-                </div>
 
-                {/* Revenue Card - Compact */}
-                <div className="bg-indigo-600 p-6 rounded-2xl text-white">
-                    <h3 className="text-base font-bold mb-2">Today's Revenue</h3>
-                    <div className="text-3xl font-black">Rs. 18,500</div>
-                    <p className="text-indigo-200 text-xs mt-2">+12% from yesterday</p>
-                </div>
-            </div>
-
-            {/* Invoice Modal - Compact */}
-            {showInvoiceModal && selectedAppt && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
-                    <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
-                        <div className="text-center mb-6">
-                            <h2 className="text-2xl font-black text-gray-900">Generate Bill</h2>
-                            <p className="text-sm text-gray-600 mt-1">For {selectedAppt.patient?.fullName}</p>
+                    {/* Quick Access Sidebar */}
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Quick Navigation</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { to: '/staff/appointments', label: 'Schedules', icon: '📅' },
+                                    { to: '/staff/patients', label: 'Patients', icon: '👥' },
+                                    { to: '/staff/billing', label: 'Payments', icon: '💰' },
+                                    { to: '/staff/book-appointment', label: 'Booking', icon: '📝' }
+                                ].map((btn, i) => (
+                                    <Link 
+                                        key={i} 
+                                        to={btn.to} 
+                                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group"
+                                    >
+                                        <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{btn.icon}</span>
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest group-hover:text-blue-600">{btn.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="bg-gray-50 p-4 rounded-xl space-y-3 mb-6">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Treatment:</span>
-                                <span className="font-bold text-gray-900">{selectedAppt.reason}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Cost:</span>
-                                <span className="font-bold text-gray-900">Rs. {selectedAppt.estimatedCost?.toLocaleString() || '0'}</span>
-                            </div>
-                            {!selectedAppt.isFeePaid && (
-                                <div className="flex justify-between text-sm border-t border-gray-200 pt-3">
-                                    <span className="text-indigo-600">Booking Fee:</span>
-                                    <span className="font-bold text-indigo-600">Rs. {selectedAppt.bookingFee || 500}</span>
+                        <div className="bg-slate-900 p-6 rounded-xl text-white shadow-lg shadow-slate-200 border border-slate-800">
+                            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Financial Overview</h2>
+                            <div className="space-y-5">
+                                <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Today's Revenue</p>
+                                    <p className="text-2xl font-bold text-white">Rs. {stats.todayRevenue.toLocaleString()}</p>
                                 </div>
-                            )}
-                            <div className="flex justify-between border-t border-gray-200 pt-3">
-                                <span className="font-bold text-gray-900">Total:</span>
-                                <span className="text-2xl font-black text-indigo-600">
-                                    Rs. {((selectedAppt.estimatedCost || 0) + (!selectedAppt.isFeePaid ? 500 : 0)).toLocaleString()}
-                                </span>
+                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Month to Date</p>
+                                    <p className="text-xl font-bold text-white">Rs. {stats.monthRevenue.toLocaleString()}</p>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => {
-                                    alert('Invoice generated successfully!');
-                                    setShowInvoiceModal(false);
-                                }}
-                                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold text-sm"
-                            >
-                                Complete & Print
-                            </button>
-                            <button
-                                onClick={() => setShowInvoiceModal(false)}
-                                className="w-full text-gray-600 text-sm font-bold"
-                            >
-                                Cancel
-                            </button>
                         </div>
                     </div>
                 </div>
-            )}
+            </main>
         </div>
     );
 };

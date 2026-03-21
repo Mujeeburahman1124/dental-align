@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
 import Navbar from '../../components/Navbar';
@@ -7,11 +7,14 @@ import Navbar from '../../components/Navbar';
 const StaffBookAppointment = () => {
     const user = JSON.parse(localStorage.getItem('userInfo')) || { fullName: 'Staff' };
     const navigate = useNavigate();
+    const location = useLocation();
+    const prefilled = location.state || {};
 
     const [formData, setFormData] = useState({
-        patientName: '',
-        patientEmail: '',
-        patientPhone: '',
+        patientName: prefilled.fullName || '',
+        patientEmail: prefilled.email || '',
+        patientPhone: prefilled.phone || '',
+        patientAge: prefilled.age || '',
         date: '',
         time: '',
         service: '',
@@ -20,25 +23,60 @@ const StaffBookAppointment = () => {
         sendEmail: true
     });
 
+    const [patientId, setPatientId] = useState(prefilled.patientId || '');
     const [loading, setLoading] = useState(false);
     const [dentists, setDentists] = useState([]);
+    const [patients, setPatients] = useState([]);
     const [bookedSlots, setBookedSlots] = useState([]);
 
-    // Fetch dentists on load
-    React.useEffect(() => {
-        const fetchDentists = async () => {
+    // Fetch patients and dentists on load
+    useEffect(() => {
+        const fetchData = async () => {
             try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/users/dentists`);
-                setDentists(data);
+                const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                const [dentistsRes, patientsRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/users/dentists`),
+                    axios.get(`${API_BASE_URL}/api/users/patients`, config)
+                ]);
+                setDentists(dentistsRes.data);
+                setPatients(patientsRes.data);
             } catch (error) {
-                console.error('Error fetching dentists:', error);
+                console.error('Error fetching data:', error);
             }
         };
-        fetchDentists();
-    }, []);
+        fetchData();
+    }, [user.token]);
+
+    // Handle patient selection change
+    const handlePatientChange = (e) => {
+        const id = e.target.value;
+        setPatientId(id);
+        
+        if (id) {
+            const selected = patients.find(p => p._id === id);
+            if (selected) {
+                setFormData(prev => ({
+                    ...prev,
+                    patientName: selected.fullName || '',
+                    patientEmail: selected.email || '',
+                    patientPhone: selected.phone || '',
+                    patientAge: selected.age || ''
+                }));
+            }
+        } else {
+            // Walk-in mode reset
+            setFormData(prev => ({
+                ...prev,
+                patientName: '',
+                patientEmail: '',
+                patientPhone: '',
+                patientAge: ''
+            }));
+        }
+    };
 
     // Check availability when date or dentist changes
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchAvailability = async () => {
             if (formData.date && formData.dentist) {
                 try {
@@ -53,7 +91,6 @@ const StaffBookAppointment = () => {
             }
         };
 
-        // Only run if dentist ID is selected (not empty)
         if (formData.dentist) {
             fetchAvailability();
         }
@@ -68,7 +105,7 @@ const StaffBookAppointment = () => {
     const [timeSlots, setTimeSlots] = useState([
         '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
         '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
-    ]); // Default fallback
+    ]);
 
     React.useEffect(() => {
         const fetchSettings = async () => {
@@ -110,35 +147,34 @@ const StaffBookAppointment = () => {
                 }
             };
 
-            // Create appointment for walk-in patient
-            const { data } = await axios.post(`${API_BASE_URL}/api/appointments/walk-in`, {
-                patientName: formData.patientName,
-                patientEmail: formData.patientEmail || undefined,
-                patientPhone: formData.patientPhone,
+            const endpoint = patientId ? `${API_BASE_URL}/api/appointments/staff` : `${API_BASE_URL}/api/appointments/walk-in`;
+            const payload = patientId ? {
+                patientId,
                 date: formData.date,
                 time: formData.time,
                 reason: formData.service,
-                dentist: formData.dentist, // Now sending dentist ID
+                dentistId: formData.dentist,
                 notes: formData.notes,
-                status: 'confirmed', // Staff bookings are auto-confirmed
+                patientAge: formData.patientAge
+            } : {
+                patientName: formData.patientName,
+                patientEmail: formData.patientEmail || undefined,
+                patientPhone: formData.patientPhone,
+                patientAge: formData.patientAge,
+                date: formData.date,
+                time: formData.time,
+                reason: formData.service,
+                dentist: formData.dentist,
+                notes: formData.notes,
+                status: 'confirmed',
                 sendEmail: formData.sendEmail
-            }, config);
+            };
 
-            const pId = data.appointment?.patient?.patientId || "Generated";
-            alert(`Appointment booked successfully for ${formData.patientName}! 🎉\n\nPatient ID: ${pId}\n\nPlease share this ID with the patient.`);
+            const { data } = await axios.post(endpoint, payload, config);
 
-            // Reset form
-            setFormData({
-                patientName: '',
-                patientEmail: '',
-                patientPhone: '',
-                date: '',
-                time: '',
-                service: '',
-                dentist: '',
-                notes: '',
-                sendEmail: true
-            });
+            const pId = data.appointment?.patient?.patientId || data.appointment?.patientId || "Success";
+            alert(`Appointment booked successfully for ${formData.patientName}! 🎉\n\nPatient ID: ${pId}`);
+
             navigate('/staff/dashboard');
 
         } catch (error) {
@@ -152,81 +188,116 @@ const StaffBookAppointment = () => {
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-50 font-inter">
+        <div className="min-h-screen bg-gray-50 font-sans pb-20 md:pb-12">
             <Navbar />
 
-            <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                 {/* Header */}
-                <div className="text-center mb-6">
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">Book Appointment for Patient</h1>
-                    <p className="text-sm text-gray-600">Fill in patient details to schedule an appointment</p>
-                </div>
+                <header className="mb-8 sm:mb-12 text-center md:text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 text-xs font-semibold mb-4 md:mb-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        Staff Portal
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Book Appointment</h1>
+                    <p className="text-sm sm:text-base text-gray-500 max-w-xl">Register walk-in patients or manually schedule appointments for existing clients.</p>
+                </header>
 
-                {/* Booking Form */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-5">
-
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                     {/* Patient Information */}
-                    <div className="space-y-3">
-                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                            <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xs font-black">1</span>
-                            Patient Information
-                        </h2>
-
-                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
-                            <label className="block text-[10px] font-bold text-blue-800 uppercase mb-1">New Patient ID</label>
-                            <div className="text-sm font-bold text-blue-900">Auto-generated upon booking</div>
+                    <section className="bg-white p-6 sm:p-10 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">Patient Details</h2>
+                                <p className="text-sm text-gray-500 font-medium">Basic contact information</p>
+                            </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Full Name *</label>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Select Registered Patient</label>
+                                <select
+                                    value={patientId}
+                                    onChange={handlePatientChange}
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm bg-white"
+                                >
+                                    <option value="">-- Manual Walk-in / New Profile --</option>
+                                    {patients.map(p => (
+                                        <option key={p._id} value={p._id}>
+                                            {p.fullName} ({p.patientId || 'New'})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Full Name <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     name="patientName"
                                     value={formData.patientName}
                                     onChange={handleChange}
+                                    readOnly={!!patientId}
                                     required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
-                                    placeholder="Patient's full name"
+                                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${patientId ? 'bg-gray-50 text-gray-500' : 'bg-white border-gray-300'}`}
+                                    placeholder="Enter full name"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email (Optional)</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Patient Age</label>
+                                <input
+                                    type="number"
+                                    name="patientAge"
+                                    value={formData.patientAge}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm bg-white"
+                                    placeholder="Years"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Email Address (Optional)</label>
                                 <input
                                     type="email"
                                     name="patientEmail"
                                     value={formData.patientEmail}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
-                                    placeholder="patient@email.com"
+                                    readOnly={!!patientId}
+                                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${patientId ? 'bg-gray-50 text-gray-500' : 'bg-white border-gray-300'}`}
+                                    placeholder="email@example.com"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Phone Number <span className="text-red-500">*</span></label>
+                                <input
+                                    type="tel"
+                                    name="patientPhone"
+                                    value={formData.patientPhone}
+                                    onChange={handleChange}
+                                    readOnly={!!patientId}
+                                    required
+                                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm ${patientId ? 'bg-gray-50 text-gray-500' : 'bg-white border-gray-300'}`}
+                                    placeholder="Enter phone number"
                                 />
                             </div>
                         </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Phone Number *</label>
-                            <input
-                                type="tel"
-                                name="patientPhone"
-                                value={formData.patientPhone}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
-                                placeholder="0771234567"
-                            />
-                        </div>
-                    </div>
+                    </section>
 
                     {/* Appointment Details */}
-                    <div className="space-y-3 pt-3 border-t border-gray-100">
-                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                            <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xs font-black">2</span>
-                            Appointment Details
-                        </h2>
-
-                        <div className="grid md:grid-cols-2 gap-3">
+                    <section className="bg-white p-6 sm:p-10 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                            </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Date *</label>
+                                <h2 className="text-lg font-bold text-gray-900">Appointment Setup</h2>
+                                <p className="text-sm text-gray-500 font-medium">Schedule date, time, and service</p>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Date <span className="text-red-500">*</span></label>
                                 <input
                                     type="date"
                                     name="date"
@@ -234,17 +305,17 @@ const StaffBookAppointment = () => {
                                     onChange={handleChange}
                                     min={today}
                                     required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm text-gray-700"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Dentist (Required for availability check)</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Dentist <span className="text-red-500">*</span></label>
                                 <select
                                     name="dentist"
                                     value={formData.dentist}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm text-gray-700 bg-white"
                                 >
                                     <option value="">Select Dentist</option>
                                     {dentists.map(dentist => (
@@ -254,132 +325,114 @@ const StaffBookAppointment = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Time *</label>
-                            <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-3 mb-8">
+                            <div className="flex justify-between items-end">
+                                <label className="block text-sm font-semibold text-gray-700">Available Times <span className="text-red-500">*</span></label>
+                                {(!formData.dentist || !formData.date) && <span className="text-xs font-semibold text-orange-500">Please select Date & Dentist</span>}
+                            </div>
+                            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-3">
                                 {timeSlots.map(slot => {
                                     const isBooked = bookedSlots.includes(slot);
+                                    const isSelected = formData.time === slot;
                                     return (
                                         <button
                                             key={slot}
                                             type="button"
                                             onClick={() => !isBooked && setFormData({ ...formData, time: slot })}
                                             disabled={isBooked || (!formData.dentist || !formData.date)}
-                                            className={`px-2 py-2 text-xs font-bold rounded-lg border transition-all ${formData.time === slot
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                            className={`px-3 py-3 rounded-lg text-sm font-bold transition-all border flex flex-col items-center justify-center gap-1 ${isSelected
+                                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                                                 : isBooked
-                                                    ? 'bg-red-50 text-red-300 border-red-100 cursor-not-allowed'
-                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
+                                                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:text-blue-600'
                                                 }`}
                                         >
                                             {slot}
-                                            {isBooked && <span className="block text-[10px] text-red-400 font-normal">Booked</span>}
+                                            {isBooked && <span className="text-[10px] font-semibold uppercase">Booked</span>}
                                         </button>
                                     );
                                 })}
                             </div>
-                            {(!formData.dentist || !formData.date) && <p className="text-xs text-orange-500 mt-1">Please select a dentist and date to see availability.</p>}
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Service *</label>
-                            <select
-                                name="service"
-                                value={formData.service}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none"
-                            >
-                                <option value="">Select service</option>
-                                {services.map(service => (
-                                    <option key={service} value={service}>{service}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <div className="grid md:grid-cols-1 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Service Required <span className="text-red-500">*</span></label>
+                                <select
+                                    name="service"
+                                    value={formData.service}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm text-gray-700 bg-white"
+                                >
+                                    <option value="">Select Service</option>
+                                    {services.map(service => (
+                                        <option key={service} value={service}>{service}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Notes (Optional)</label>
-                            <textarea
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleChange}
-                                rows="2"
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:outline-none resize-none"
-                                placeholder="Any special requirements or concerns..."
-                            ></textarea>
-                        </div>
-
-                        {/* SMS Notification Option */}
-                        <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg">
-                            <input
-                                type="checkbox"
-                                id="sendEmail"
-                                name="sendEmail"
-                                checked={formData.sendEmail}
-                                onChange={handleChange}
-                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                            />
-                            <label htmlFor="sendEmail" className="text-xs font-bold text-gray-700">
-                                Send confirmation SMS to patient
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Summary */}
-                    {formData.date && formData.time && formData.service && formData.patientName && (
-                        <div className="bg-indigo-50 rounded-xl p-4 space-y-2">
-                            <h3 className="font-bold text-sm text-gray-900">Booking Summary</h3>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <span className="text-gray-600">Patient:</span>
-                                    <div className="font-bold text-gray-900">{formData.patientName}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Service:</span>
-                                    <div className="font-bold text-gray-900">{formData.service}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Date:</span>
-                                    <div className="font-bold text-gray-900">{new Date(formData.date).toLocaleDateString()}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Time:</span>
-                                    <div className="font-bold text-gray-900">{formData.time}</div>
-                                </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Additional Notes</label>
+                                <textarea
+                                    name="notes"
+                                    value={formData.notes}
+                                    onChange={handleChange}
+                                    rows="3"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none"
+                                    placeholder="Any special requests or conditions..."
+                                ></textarea>
                             </div>
                         </div>
-                    )}
 
-                    {/* Buttons */}
-                    <div className="flex gap-3 pt-2">
+                        {/* Notifications Toggle */}
+                        <div className="mt-8">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        name="sendEmail"
+                                        checked={formData.sendEmail}
+                                        onChange={handleChange}
+                                        className="sr-only"
+                                    />
+                                    <div className={`block w-10 h-6 rounded-full transition-colors ${formData.sendEmail ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.sendEmail ? 'transform translate-x-4' : ''}`}></div>
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Send Confirmation</div>
+                                    <div className="text-xs text-gray-500">Notify patient via Email/SMS</div>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    {/* Summary & Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-end">
                         <button
                             type="button"
                             onClick={() => navigate('/staff/dashboard')}
-                            className="flex-1 px-4 py-3 text-sm bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200"
+                            className="px-8 py-3 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-bold hover:bg-gray-50 transition-colors w-full sm:w-auto"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-3 text-sm bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="px-8 py-3 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70 flex items-center justify-center gap-2 w-full sm:w-auto min-w-[200px]"
                         >
                             {loading ? (
                                 <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Booking...
+                                    <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                                    Processing...
                                 </>
                             ) : (
-                                'Confirm Booking'
+                                'Book Appointment'
                             )}
                         </button>
                     </div>
-
-                    <p className="text-xs text-gray-500 text-center">
-                        Appointment will be auto-confirmed. {formData.sendEmail && 'Patient will receive SMS notification.'}
-                    </p>
                 </form>
-            </div>
+            </main>
         </div>
     );
 };

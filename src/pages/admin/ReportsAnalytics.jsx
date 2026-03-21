@@ -1,258 +1,317 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_BASE_URL } from '../../config';
+import Navbar from '../../components/Navbar';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+    PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts';
+
+// Standard "student-build" color palette - clean, clear, no marketing fluff
+const CHART_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#db2777'];
 
 const ReportsAnalytics = () => {
-    const user = JSON.parse(localStorage.getItem('userInfo')) || { fullName: 'Admin User' };
+    const user = JSON.parse(localStorage.getItem('userInfo')) || { fullName: 'Admin' };
     const navigate = useNavigate();
-    const [selectedPeriod, setSelectedPeriod] = useState('month');
+    const [selectedPeriod, setSelectedPeriod] = useState('month'); 
+    const [selectedBranch, setSelectedBranch] = useState('All');
+    const [treatments, setTreatments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [branches, setBranches] = useState([]);
 
-    // Dynamic data based on selected period
-    const getChartData = () => {
-        switch (selectedPeriod) {
-            case 'week':
-                return [
-                    { label: 'Mon', rev: 12, h: '40%' },
-                    { label: 'Tue', rev: 18, h: '60%' },
-                    { label: 'Wed', rev: 15, h: '50%' },
-                    { label: 'Thu', rev: 22, h: '75%' },
-                    { label: 'Fri', rev: 28, h: '90%' },
-                    { label: 'Sat', rev: 32, h: '95%' },
-                    { label: 'Sun', rev: 10, h: '35%' }
-                ];
-            case 'year':
-                return [
-                    { label: 'Jan', rev: 380, h: '60%' },
-                    { label: 'Feb', rev: 420, h: '70%' },
-                    { label: 'Mar', rev: 395, h: '65%' },
-                    { label: 'Apr', rev: 450, h: '80%' },
-                    { label: 'May', rev: 480, h: '90%' },
-                    { label: 'Jun', rev: 485, h: '95%' },
-                    { label: 'Jul', rev: 460, h: '85%' },
-                    { label: 'Aug', rev: 430, h: '75%' },
-                    { label: 'Sep', rev: 490, h: '92%' },
-                    { label: 'Oct', rev: 510, h: '96%' },
-                    { label: 'Nov', rev: 470, h: '88%' },
-                    { label: 'Dec', rev: 520, h: '98%' }
-                ];
-            case 'month':
-            default:
-                return [
-                    { label: 'Week 1', rev: 95, h: '65%' },
-                    { label: 'Week 2', rev: 110, h: '75%' },
-                    { label: 'Week 3', rev: 105, h: '70%' },
-                    { label: 'Week 4', rev: 125, h: '85%' }
-                ];
+    useEffect(() => {
+        const fetchAllData = async () => {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            try {
+                // Parallel fetch for clinical speed
+                const [treatData, branchData] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/treatments/all`, config),
+                    axios.get(`${API_BASE_URL}/api/branches`, config)
+                ]);
+                
+                setTreatments(treatData.data);
+                
+                // If branches are empty, use unique branches found in treatments to ensure Kandy/Kurunegala show up.
+                const dbBranches = branchData.data || [];
+                if (dbBranches.length === 0) {
+                    const unique = [...new Set(treatData.data.map(t => t.branch?.name || t.branch).filter(Boolean))];
+                    setBranches(unique.map(b => ({ _id: b, name: b })));
+                } else {
+                    setBranches(dbBranches);
+                }
+
+            } catch (err) {
+                console.error('Data Fetch Error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAllData();
+    }, [user.token]);
+
+    // Simplified filtering logic for consistent student build
+    const filteredData = useMemo(() => {
+        let results = treatments;
+        
+        // Date filtering based on period
+        const now = new Date();
+        if (selectedPeriod === 'month') {
+            results = results.filter(t => new Date(t.date).getMonth() === now.getMonth() && new Date(t.date).getFullYear() === now.getFullYear());
+        } else if (selectedPeriod === 'week') {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            results = results.filter(t => new Date(t.date) >= oneWeekAgo);
+        } else if (selectedPeriod === 'year') {
+            results = results.filter(t => new Date(t.date).getFullYear() === now.getFullYear());
         }
+
+        // Branch filtering
+        if (selectedBranch !== 'All') {
+            results = results.filter(t => {
+                const bName = t.branch?.name || t.branch;
+                return bName === selectedBranch || (t.branch?._id === selectedBranch);
+            });
+        }
+        return results;
+    }, [treatments, selectedPeriod, selectedBranch]);
+
+    // Chart Data computations
+    const revenueTimelineData = useMemo(() => {
+        const data = [];
+        const now = new Date();
+        
+        if (selectedPeriod === 'year') {
+            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].forEach((m, i) => {
+                const total = filteredData.filter(t => new Date(t.date).getMonth() === i).reduce((acc, t) => acc + (t.cost || 0), 0);
+                data.push({ name: m, revenue: total });
+            });
+        } else if (selectedPeriod === 'month') {
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const total = filteredData.filter(t => new Date(t.date).getDate() === i).reduce((acc, t) => acc + (t.cost || 0), 0);
+                data.push({ name: `${i}`, revenue: total });
+            }
+        } else {
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((d, i) => {
+                const total = filteredData.filter(t => new Date(t.date).getDay() === i).reduce((acc, t) => acc + (t.cost || 0), 0);
+                data.push({ name: d, revenue: total });
+            });
+        }
+        return data;
+    }, [filteredData, selectedPeriod]);
+
+    const serviceDistributionData = useMemo(() => {
+        const counts = {};
+        filteredData.forEach(t => {
+            const label = t.title || 'General';
+            counts[label] = (counts[label] || 0) + 1;
+        });
+        return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }, [filteredData]);
+
+    const branchComparisonData = useMemo(() => {
+        const map = {};
+        // Use all treatments for this chart to compare ALL branches
+        treatments.forEach(t => {
+            const bName = t.branch?.name || t.branch || 'Colombo Elite'; // default fallback for unassigned
+            map[bName] = (map[bName] || 0) + (t.cost || 0);
+        });
+        return Object.entries(map).map(([name, revenue]) => ({ name, revenue }));
+    }, [treatments]);
+
+    const downloadCSV = () => {
+        const header = "Date,Patient,Service,Branch,Cost,Status\n";
+        const rows = filteredData.map(t => 
+            `${new Date(t.date).toLocaleDateString()},${t.patient?.fullName || 'Walk-in'},${t.title},${t.branch?.name || t.branch || 'Main'},${t.cost},${t.paid ? 'Paid' : 'Unpaid'}`
+        ).join("\n");
+        const blob = new Blob([header + rows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Dental_Align_Report_${selectedPeriod}.csv`;
+        a.click();
     };
 
-    const chartData = getChartData();
-    const periodTotals = { week: 'Rs. 137k', month: 'Rs. 435k', year: 'Rs. 5.5M' };
-    const periodGrowth = { week: '↑ 8.4%', month: '↑ 14.2%', year: '↑ 22.5%' };
-
-    const handleLogout = () => {
-        localStorage.removeItem('userInfo');
-        navigate('/login');
-    };
+    if (loading) return <div className="p-20 text-center font-bold text-slate-400">LOADING DATA...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex font-inter">
-            {/* Sidebar - Consistent with Dashboard */}
-            <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-20">
-                <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-center gap-2 text-blue-600">
-                        <span className="text-2xl">🦷</span>
-                        <span className="text-xl font-bold tracking-tight text-gray-900">DentAlign</span>
+        <div className="bg-gradient-to-br from-slate-50 via-white to-blue-100/30 min-h-screen text-slate-800">
+            <Navbar />
+
+            <div className="max-w-screen-xl mx-auto px-4 py-8">
+                {/* Clean Header */}
+                <div className="mb-8 p-6 bg-white border border-slate-300 rounded-lg shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <Link to="/admin/dashboard" className="text-blue-600 font-bold text-xs uppercase hover:underline mb-2 block">← Dashboard Overview</Link>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Clinical Reports & Analytical Hub</h1>
+                        <p className="text-sm text-slate-500 font-medium">Detailed breakdown for Colombo, Kandy, and Kurunegala branches.</p>
                     </div>
-                    <div className="text-xs text-gray-400 mt-1 font-medium">Clinic Administration</div>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-1">
-                    <Link to="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-all">
-                        <span className="text-lg">📊</span>
-                        <span className="font-semibold text-sm">Dashboard</span>
-                    </Link>
-                    <Link to="/admin/reports" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-md transition-all">
-                        <span className="text-lg">📈</span>
-                        <span className="font-semibold text-sm">Reports & Analytics</span>
-                    </Link>
-                    <Link to="/admin/balance" className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-all">
-                        <span className="text-lg">💰</span>
-                        <span className="font-semibold text-sm">Financial Overview</span>
-                    </Link>
-                </nav>
-
-                <div className="p-4 border-t border-gray-100">
-                    <button onClick={handleLogout} className="w-full py-2 px-4 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors text-left flex items-center gap-2">
-                        <span>🚪</span> Sign Out
+                    <button onClick={downloadCSV} className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2.5 rounded text-xs font-bold uppercase tracking-widest transition-all">
+                        Download CSV Report
                     </button>
                 </div>
-            </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-6 flex justify-between items-center">
-                    <div>
-                        <Link to="/admin/dashboard" className="text-sm font-semibold text-gray-500 hover:text-blue-600 mb-2 inline-flex items-center gap-1">
-                            ← Back to Dashboard
-                        </Link>
-                        <h1 className="text-2xl font-bold text-gray-900">Analytics Report</h1>
-                        <p className="text-gray-500 text-sm mt-1">Detailed breakdown of clinic performance and growth.</p>
+                {/* Filters - Responsive Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div className="bg-white p-4 border border-slate-300 rounded-lg shadow-sm">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Time Period</label>
+                        <select 
+                            value={selectedPeriod} 
+                            onChange={e => setSelectedPeriod(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 p-2 text-sm font-bold uppercase outline-none focus:border-blue-500 rounded"
+                        >
+                            <option value="week">Past 7 Days</option>
+                            <option value="month">Current Month</option>
+                            <option value="year">Current Year</option>
+                        </select>
                     </div>
-                    <div className="flex bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-                        {['Week', 'Month', 'Year'].map(p => (
-                            <button key={p} onClick={() => setSelectedPeriod(p.toLowerCase())} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${selectedPeriod === p.toLowerCase() ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                                {p}
-                            </button>
-                        ))}
-                    </div>
-                </header>
-
-                <div className="grid grid-cols-12 gap-6 mb-8">
-                    {/* Revenue Chart - SVG Bar Chart */}
-                    <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Revenue Trends</h3>
-                                <div className="text-sm text-green-600 font-medium">{periodGrowth[selectedPeriod]} vs last period</div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-2xl font-bold text-gray-900">{periodTotals[selectedPeriod]}</div>
-                                <div className="text-xs text-gray-500 font-medium uppercase">Total Revenue</div>
-                            </div>
-                        </div>
-
-                        {/* Custom SVG Bar Chart */}
-                        <div className="h-64 w-full">
-                            <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
-                                {/* Y-axis lines */}
-                                {[0, 1, 2, 3, 4].map((i) => (
-                                    <line
-                                        key={i}
-                                        x1="0"
-                                        y1={i * 10}
-                                        x2="100"
-                                        y2={i * 10}
-                                        stroke="#f3f4f6"
-                                        strokeWidth="0.5"
-                                    />
-                                ))}
-
-                                {/* Bars */}
-                                {chartData.map((d, i) => {
-                                    const barHeight = parseFloat(d.h) / 2; // Scale down for 50 height
-                                    const barWidth = 6;
-                                    // Calculate x position based on count to center them
-                                    const x = (i * (100 / chartData.length)) + (100 / chartData.length / 2) - (barWidth / 2);
-
-                                    return (
-                                        <g key={i} className="group cursor-pointer">
-                                            <rect
-                                                x={x}
-                                                y={50 - barHeight}
-                                                width={barWidth}
-                                                height={barHeight}
-                                                rx="1"
-                                                className="fill-indigo-500 hover:fill-indigo-600 transition-all duration-300"
-                                            />
-                                            {/* Tooltip */}
-                                            <g className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <rect
-                                                    x={x - 4}
-                                                    y={50 - barHeight - 8}
-                                                    width="14"
-                                                    height="6"
-                                                    rx="1"
-                                                    fill="#1f2937"
-                                                />
-                                                <text
-                                                    x={x + 3}
-                                                    y={50 - barHeight - 4}
-                                                    fontSize="3"
-                                                    fill="white"
-                                                    textAnchor="middle"
-                                                    dominantBaseline="middle"
-                                                >
-                                                    {d.rev}k
-                                                </text>
-                                            </g>
-                                            <text
-                                                x={x + 3}
-                                                y="55"
-                                                fontSize="3"
-                                                fill="#6b7280"
-                                                textAnchor="middle"
-                                                className="font-medium"
-                                            >
-                                                {d.label}
-                                            </text>
-                                        </g>
-                                    );
-                                })}
-                            </svg>
-                        </div>
-                    </div>
-
-                    {/* Services - SVG Pie Chart */}
-                    <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Top Services</h3>
-
-                        <div className="flex-1 flex items-center justify-center relative">
-                            {/* Simple Pie Chart using conic-gradient */}
-                            <div className="w-48 h-48 rounded-full relative"
-                                style={{
-                                    background: `conic-gradient(
-                                        #4f46e5 0% 42%, 
-                                        #6366f1 42% 70%, 
-                                        #14b8a6 70% 88%, 
-                                        #f97316 88% 100%
-                                    )`
-                                }}
-                            >
-                                <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center flex-col">
-                                    <span className="text-2xl font-bold text-gray-900">{chartData.length * 12}</span>
-                                    <span className="text-xs text-gray-500 uppercase font-bold">Procedures</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 space-y-3">
-                            {[
-                                { label: 'Surgical Procedures', val: '42%', color: 'bg-indigo-600' },
-                                { label: 'Cosmetic Dentistry', val: '28%', color: 'bg-indigo-500' },
-                                { label: 'General Checkups', val: '18%', color: 'bg-teal-500' },
-                                { label: 'Orthodontics', val: '12%', color: 'bg-orange-500' }
-                            ].map((s, i) => (
-                                <div key={i} className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-3 h-3 rounded-full ${s.color}`}></div>
-                                        <span className="text-gray-600 font-medium">{s.label}</span>
-                                    </div>
-                                    <span className="font-bold text-gray-900">{s.val}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* KPIs */}
-                    <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                            { label: 'Patient Retention', val: '94.2%', icon: '🔄', change: '+2.1%', color: 'text-green-600' },
-                            { label: 'Avg Case Value', val: 'Rs. 12k', icon: '💎', change: '+1.2k', color: 'text-blue-600' },
-                            { label: 'New Patients', val: '18.4%', icon: '🚀', change: '+3.4%', color: 'text-purple-600' },
-                            { label: 'Efficiency', val: '0.92', icon: '⚡', change: '+0.04', color: 'text-orange-600' }
-                        ].map((k, i) => (
-                            <div key={i} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="text-2xl">{k.icon}</div>
-                                    <div className={`text-xs font-bold ${k.color} bg-gray-50 px-2 py-1 rounded-full`}>{k.change}</div>
-                                </div>
-                                <div className="text-2xl font-bold text-gray-900 mb-1">{k.val}</div>
-                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{k.label}</div>
-                            </div>
-                        ))}
+                    <div className="bg-white p-4 border border-slate-300 rounded-lg shadow-sm">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Selected Clinic Location</label>
+                        <select 
+                            value={selectedBranch} 
+                            onChange={e => setSelectedBranch(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 p-2 text-sm font-bold uppercase outline-none focus:border-blue-500 rounded"
+                        >
+                            <option value="All">All Locations Combined</option>
+                            {branches.map(b => <option key={b._id} value={b.name}>{b.name}</option>)}
+                        </select>
                     </div>
                 </div>
-            </main>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {[
+                        { label: 'Calculated Yield', value: 'Rs. ' + filteredData.reduce((acc, t) => acc + (t.cost || 0), 0).toLocaleString(), color: 'text-blue-600' },
+                        { label: 'Procedures Done', value: filteredData.length, color: 'text-slate-900' },
+                        { label: 'Settled Income', value: 'Rs. ' + filteredData.filter(t => t.paid).reduce((acc, t) => acc + (t.cost || 0), 0).toLocaleString(), color: 'text-emerald-700' },
+                        { label: 'Total Patient Dues', value: 'Rs. ' + filteredData.filter(t => !t.paid).reduce((acc, t) => acc + (t.cost || 0), 0).toLocaleString(), color: 'text-red-600' }
+                    ].map((m, i) => (
+                        <div key={i} className="bg-white p-5 border border-slate-300 rounded-lg shadow-sm">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{m.label}</p>
+                            <div className={`text-xl font-bold ${m.color}`}>{m.value}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Main Charts - Responsive Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    {/* Revenue Over Time */}
+                    <div className="bg-white p-6 border border-slate-300 rounded-lg shadow-sm min-h-[350px] flex flex-col">
+                        <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest mb-6 border-b pb-3">Revenue Collection Performance</h3>
+                        <div className="flex-1 w-full mt-auto">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={revenueTimelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={v => `LKR ${v/1000}k`} />
+                                    <Tooltip contentStyle={{ fontSize: '11px', fontWeight: 700, borderRadius: '4px' }} cursor={{ fill: '#f1f5f9' }} />
+                                    <Bar dataKey="revenue" fill="#2563eb" barSize={selectedPeriod === 'month' ? 8 : 30} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Service Breakdown */}
+                    <div className="bg-white p-6 border border-slate-300 rounded-lg shadow-sm min-h-[350px] flex flex-col">
+                        <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest mb-6 border-b pb-3">Treatment Portfolio Breakdown</h3>
+                        <div className="flex-1 w-full mt-auto">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie 
+                                        data={serviceDistributionData} 
+                                        dataKey="value" 
+                                        nameKey="name" 
+                                        cx="50%" cy="50%" 
+                                        innerRadius={60} 
+                                        outerRadius={80} 
+                                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                                    >
+                                        {serviceDistributionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ fontSize: '11px', fontWeight: 700, borderRadius: '4px' }} />
+                                    <Legend align="right" verticalAlign="middle" layout="vertical" iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Branch Comparison */}
+                    <div className="bg-white p-6 border border-slate-300 rounded-lg shadow-sm min-h-[350px] flex flex-col">
+                        <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest mb-6 border-b pb-3">Branch Comparison View</h3>
+                        <div className="flex-1 w-full mt-auto">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={branchComparisonData} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fontWeight: 800 }} axisLine={false} tickLine={false} width={100} />
+                                    <Tooltip contentStyle={{ fontSize: '11px', fontWeight: 700, borderRadius: '4px' }} />
+                                    <Bar dataKey="revenue" fill="#16a34a" barSize={16} radius={[0, 4, 4, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <p className="mt-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Comparing Colombo, Kandy, and Kurunegala performance metrics.</p>
+                    </div>
+
+                    {/* Operational Velocity (Area) */}
+                    <div className="bg-white p-6 border border-slate-300 rounded-lg shadow-sm min-h-[350px] flex flex-col">
+                        <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest mb-6 border-b pb-3">Clinical Treatment Velocity</h3>
+                        <div className="flex-1 w-full mt-auto">
+                            <ResponsiveContainer width="100%" height={250}>
+                                <AreaChart data={revenueTimelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                                    <Tooltip contentStyle={{ fontSize: '11px', fontWeight: 700, borderRadius: '4px' }} />
+                                    <Area type="monotone" dataKey="revenue" stroke="#2563eb" fill="#2563eb" fillOpacity={0.1} strokeWidth={3} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Treatment List Table */}
+                <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+                    <div className="bg-slate-50 p-4 border-b border-slate-300">
+                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Procedural Transaction History</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50">
+                                    <th className="px-5 py-3 border-b text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service Date</th>
+                                    <th className="px-5 py-3 border-b text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patient Details</th>
+                                    <th className="px-5 py-3 border-b text-[10px] font-bold text-slate-400 uppercase tracking-widest">Branch Location</th>
+                                    <th className="px-5 py-3 border-b text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Individual Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredData.length > 0 ? filteredData.slice(0, 50).map((t, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-5 py-3 border-b text-xs font-medium text-slate-600 italic">{new Date(t.date).toLocaleDateString()}</td>
+                                        <td className="px-5 py-3 border-b">
+                                            <div className="font-bold text-slate-800">{t.patient?.fullName || 'Walk-in'}</div>
+                                            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{t.title}</div>
+                                        </td>
+                                        <td className="px-5 py-3 border-b">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.branch?.name || t.branch || 'Colombo'}</span>
+                                        </td>
+                                        <td className="px-5 py-3 border-b text-right font-black text-slate-900">
+                                            Rs. {t.cost?.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-5 py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic">No clinical records found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

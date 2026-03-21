@@ -4,6 +4,7 @@ import User from './models/User.js';
 import Appointment from './models/Appointment.js';
 import TreatmentRecord from './models/TreatmentRecord.js';
 import Payment from './models/Payment.js';
+import Branch from './models/Branch.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,6 +19,16 @@ const seedData = async () => {
         await Appointment.deleteMany();
         await TreatmentRecord.deleteMany();
         await Payment.deleteMany();
+        await Branch.deleteMany();
+
+        // CREATE BRANCH
+        const branch = await Branch.create({
+            name: 'Colombo Elite',
+            location: '123 Elite Plaza, Colombo 03',
+            contactNumber: '+94 11 234 5678'
+        });
+
+        console.log('Branch Seeded.');
 
         // CREATE USERS
         // Note: Password hashing is handled by User model pre-save hook
@@ -26,7 +37,8 @@ const seedData = async () => {
             email: 'admin@dentalign.com',
             phone: '0771234567',
             password: 'password123',
-            role: 'admin'
+            role: 'admin',
+            createdAt: new Date('2020-01-01') // Started with clinic
         });
 
         const staff = await User.create({
@@ -34,7 +46,8 @@ const seedData = async () => {
             email: 'staff@dentalign.com',
             phone: '0777654321',
             password: 'password123',
-            role: 'staff'
+            role: 'staff',
+            createdAt: new Date('2020-01-05') // Joined early
         });
 
         const dentist = await User.create({
@@ -44,7 +57,8 @@ const seedData = async () => {
             password: 'password123',
             role: 'dentist',
             slmcNumber: 'SLMC-9988',
-            specialization: 'Orthodontics'
+            specialization: 'Orthodontics',
+            createdAt: new Date('2020-02-20') // Second of first two
         });
 
         const patient = await User.create({
@@ -61,7 +75,8 @@ const seedData = async () => {
         const appt1 = await Appointment.create({
             patient: patient._id,
             dentist: dentist._id,
-            date: new Date('2026-02-10'),
+            branch: branch._id,
+            date: new Date(),
             time: '10:30 AM',
             reason: 'Annual Checkup',
             serviceName: 'Dental Checkup',
@@ -73,7 +88,8 @@ const seedData = async () => {
         const appt2 = await Appointment.create({
             patient: patient._id,
             dentist: dentist._id,
-            date: new Date('2026-02-15'),
+            branch: branch._id,
+            date: new Date(),
             time: '02:30 PM',
             reason: 'Teeth Whitening Procedure',
             serviceName: 'Teeth Whitening',

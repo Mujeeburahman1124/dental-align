@@ -25,8 +25,8 @@ const paymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['card', 'cash', 'bank_transfer'],
-        default: 'card'
+        enum: ['Card Payment', 'Online Payment', 'Direct Payment', 'card', 'cash', 'bank_transfer'],
+        default: 'Card Payment'
     },
     status: {
         type: String,
@@ -35,6 +35,11 @@ const paymentSchema = new mongoose.Schema({
     },
     transactionId: {
         type: String
+    },
+    sessionId: {
+        type: String,
+        unique: true,
+        sparse: true
     },
     date: {
         type: Date,

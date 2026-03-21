@@ -1,185 +1,241 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
 
 const DentistSettings = () => {
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem('userInfo')) || {
+    const navigate = useNavigate();
+    const loggedInUser = JSON.parse(localStorage.getItem('userInfo')) || {};
+    const selectedDentistId = localStorage.getItem('selectedDentistId') || loggedInUser._id;
+
+    const [user, setUser] = useState({
         fullName: 'Dr. Dentist',
         email: 'dentist@dentalalign.com',
-        phone: '0777654321',
+        phone: '',
         slmcNumber: '',
-        specialization: 'Cosmetic Dentistry'
+        specialization: ''
     });
-    const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem('userInfo');
-        navigate('/login');
-    };
+    const [isOwnProfile, setIsOwnProfile] = useState(selectedDentistId === loggedInUser._id);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState(null);
 
-    const handleChange = (e) => {
+    useEffect(() => {
+        setIsOwnProfile(selectedDentistId === loggedInUser._id);
+        if (selectedDentistId === loggedInUser._id) {
+            setUser(loggedInUser);
+        } else {
+            // Fetch the selected dentist's details
+            axios.get(`${API_BASE_URL}/api/users/dentists`)
+                .then(({ data }) => {
+                    const found = data.find(d => d._id === selectedDentistId);
+                    if (found) setUser(found);
+                })
+                .catch(console.error);
+        }
+    }, [selectedDentistId]);
+
+    const handleChange = e => {
         setUser({ ...user, [e.target.name]: e.target.value });
     };
 
     const handleSave = async () => {
+        setSaving(true);
+        setMessage(null);
         try {
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.token}`
+                    Authorization: `Bearer ${loggedInUser.token}`
                 }
             };
-            const { data } = await axios.put(`${API_BASE_URL}/api/users/profile`, user, config);
-            // Merge with existing token
-            const updatedUser = { ...data, token: user.token };
+            const payload = { ...user };
+            if (newPassword && newPassword === confirmPassword) {
+                payload.password = newPassword;
+            } else if (newPassword) {
+                setMessage({ type: 'error', text: 'Passwords do not match.' });
+                setSaving(false);
+                return;
+            }
+            const { data } = await axios.put(`${API_BASE_URL}/api/users/profile`, payload, config);
+            const updatedUser = { ...data, token: loggedInUser.token };
             localStorage.setItem('userInfo', JSON.stringify(updatedUser));
             setUser(updatedUser);
-            alert('Profile Updated Successfully!');
+            setMessage({ type: 'success', text: 'Profile updated successfully.' });
         } catch (error) {
-            console.error(error);
-            alert('Failed to update profile');
+            setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+        } finally {
+            setSaving(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex justify-center py-8 font-inter">
-            <div className="bg-white w-full max-w-[1440px] flex rounded-[40px] shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100">
-                {/* Sidebar Navigation */}
-                <aside className="w-64 border-r border-gray-50 flex flex-col h-full bg-white">
-                    <div className="p-8 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#007AFF] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>
-                        </div>
-                        <div>
-                            <span className="text-xl font-bold text-[#111827]">DentAlign</span>
-                            <div className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none">Settings Portal</div>
-                        </div>
+        <div className="min-h-screen bg-gray-50 font-sans pb-20 md:pb-12 text-gray-900">
+            <Navbar />
+
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+                <header className="mb-8 sm:mb-12">
+                    <div className="space-y-2">
+                        <Link to="/dentist/dashboard" className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 mb-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                            Back to Dashboard
+                        </Link>
+                        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Account Settings</h1>
+                        <p className="text-sm sm:text-base text-gray-500 max-w-xl">
+                            {isOwnProfile ? 'Update your professional profile and security preferences.' : `Viewing professional profile for ${user.fullName}.`}
+                        </p>
                     </div>
-                    <nav className="flex-1 px-4 space-y-2 mt-4">
-                        <Link to="/dentist/dashboard" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">📅</span>Dashboard
-                        </Link>
-                        <Link to="/dentist/records" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">📋</span>Treatment Records
-                        </Link>
-                        <Link to="/dentist/prescriptions" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">💊</span>Prescriptions
-                        </Link>
-                        <Link to="/dentist/calendar" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all">
-                            <span className="text-xl">🗓️</span>Calendar
-                        </Link>
-                        <Link to="/dentist/settings" className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[13px] font-bold bg-[#007AFF]/10 text-[#007AFF]">
-                            <span className="text-xl">⚙️</span>Settings
-                        </Link>
-                    </nav>
-                    <div className="p-6">
-                        <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all">
-                            <span>🚪</span> Logout
-                        </button>
+                </header>
+
+                {message && (
+                    <div className={`mb-8 p-4 rounded-xl text-sm font-bold border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                        <span className="text-xl">{message.type === 'success' ? '✅' : '❌'}</span>
+                        {message.text}
                     </div>
-                </aside>
+                )}
 
-                {/* Main Content */}
-                <main className="flex-1 p-12 bg-white overflow-y-auto custom-scrollbar">
-                    <div className="max-w-4xl mx-auto">
-                        <h1 className="text-4xl font-extrabold text-[#111827] tracking-tight mb-2">Account Settings</h1>
-                        <p className="text-gray-400 font-bold mb-10">Manage your profile and security preferences</p>
-
-                        {/* Profile Section */}
-                        <section className="mb-12">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl font-bold text-[#111827]">Profile Information</h2>
-                                <button className="text-sm font-bold text-[#007AFF] hover:underline">Edit Profile</button>
-                            </div>
-
-                            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm">
-                                <div className="flex items-center gap-6 mb-8">
-                                    <div className="w-24 h-24 rounded-[32px] bg-blue-50 border-4 border-white shadow-xl flex items-center justify-center text-4xl">
-                                        👨‍⚕️
-                                    </div>
-                                    <div>
-                                        <button className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold mb-2 hover:bg-black transition-all">Change Photo</button>
-                                        <p className="text-xs text-gray-400 font-bold tracking-tight">JPG, GIF or PNG. 1MB Max.</p>
-                                    </div>
+                <div className="space-y-8">
+                    {/* Professional Profile */}
+                    <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
+                            <h2 className="text-base font-bold text-gray-900 uppercase tracking-wider">Professional Profile</h2>
+                        </div>
+                        <div className="p-6 sm:p-8">
+                            <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 pb-10 border-b border-gray-100">
+                                <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl font-bold border border-blue-100 shadow-sm shrink-0">
+                                    {user.fullName?.[0] || 'D'}
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Full Name</label>
-                                        <input
-                                            name="fullName" value={user.fullName} onChange={handleChange}
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Email Address</label>
-                                        <input
-                                            name="email" value={user.email} onChange={handleChange}
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Phone Number</label>
-                                        <input
-                                            name="phone" value={user.phone} onChange={handleChange}
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">SLMC Registration</label>
-                                        <input
-                                            name="slmcNumber" value={user.slmcNumber || ''} onChange={handleChange}
-                                            placeholder="SLMC-XXXX"
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
+                                <div className="text-center sm:text-left">
+                                    <p className="text-xl font-bold text-gray-900">{user.fullName}</p>
+                                    <p className="text-sm text-blue-600 font-bold uppercase tracking-widest mt-1">Dentist Portal Access</p>
                                 </div>
                             </div>
-                        </section>
 
-                        {/* Security Section */}
-                        <section>
-                            <h2 className="text-2xl font-bold text-[#111827] mb-6">Security & Privacy</h2>
-                            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm">
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Current Password</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
+                                    <input
+                                        name="fullName"
+                                        value={user.fullName || ''}
+                                        onChange={handleChange}
+                                        disabled={!isOwnProfile}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</label>
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        value={user.email || ''}
+                                        onChange={handleChange}
+                                        disabled={!isOwnProfile}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone Number</label>
+                                    <input
+                                        name="phone"
+                                        value={user.phone || ''}
+                                        onChange={handleChange}
+                                        disabled={!isOwnProfile}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                                        placeholder="0112 345 678"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">SLMC License No.</label>
+                                    <input
+                                        name="slmcNumber"
+                                        value={user.slmcNumber || ''}
+                                        onChange={handleChange}
+                                        disabled={!isOwnProfile}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                                        placeholder="SLMC-XXXX"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2 space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Specialization</label>
+                                    <input
+                                        name="specialization"
+                                        value={user.specialization || ''}
+                                        onChange={handleChange}
+                                        disabled={!isOwnProfile}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                                        placeholder="e.g. Cosmetic Dentistry, Orthodontics"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {isOwnProfile && (
+                        <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
+                                <h2 className="text-base font-bold text-gray-900 uppercase tracking-wider">Security Settings</h2>
+                            </div>
+                            <div className="p-6 sm:p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Current Password</label>
+                                    <input
+                                        type="password"
+                                        value={currentPassword}
+                                        onChange={e => setCurrentPassword(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Password</label>
                                         <input
                                             type="password"
-                                            className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all"
-                                            placeholder="••••••••••••"
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            placeholder="••••••••"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-8">
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">New Password</label>
-                                            <input
-                                                type="password"
-                                                className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all"
-                                                placeholder="••••••••••••"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Confirm New Password</label>
-                                            <input
-                                                type="password"
-                                                className="w-full p-4 bg-gray-50 rounded-2xl font-bold text-[#111827] border border-transparent focus:bg-white focus:border-[#007AFF] outline-none transition-all"
-                                                placeholder="••••••••••••"
-                                            />
-                                        </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={e => setConfirmPassword(e.target.value)}
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            placeholder="••••••••"
+                                        />
                                     </div>
-                                </div>
-                                <div className="mt-10 flex justify-end">
-                                    <button onClick={handleSave} className="bg-[#007AFF] text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-[#0066D6] transition-all transform hover:scale-[1.02]">
-                                        Save All Changes
-                                    </button>
                                 </div>
                             </div>
                         </section>
-                    </div>
-                </main>
-            </div>
+                    )}
+
+                    {isOwnProfile && (
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button
+                                onClick={() => navigate('/dentist/dashboard')}
+                                className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="px-8 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm active:scale-95"
+                            >
+                                {saving ? 'Updating...' : 'Update Settings'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </main>
         </div>
     );
 };

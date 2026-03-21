@@ -34,6 +34,30 @@ export const admin = (req, res, next) => {
     if (req.user && req.user.role === 'admin') {
         next();
     } else {
-        res.status(401).json({ message: 'Not authorized as an admin' });
+        res.status(403).json({ message: 'Not authorized: Admin access required' });
+    }
+};
+
+export const dentist = (req, res, next) => {
+    if (req.user && (req.user.role === 'dentist' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized: Dentist access required' });
+    }
+};
+
+export const staff = (req, res, next) => {
+    if (req.user && (req.user.role === 'staff' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized: Staff access required' });
+    }
+};
+
+export const dentistOrStaff = (req, res, next) => {
+    if (req.user && (req.user.role === 'dentist' || req.user.role === 'staff' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized: Dentist or Staff access required' });
     }
 };

@@ -6,85 +6,128 @@ const AdminSettings = () => {
     const user = JSON.parse(localStorage.getItem('userInfo'));
     const navigate = useNavigate();
     const [settings, setSettings] = useState({
-        clinicName: 'DentAlign Clinical Center',
+        clinicName: 'DentAlign Dental Clinic',
         clinicAddress: '72/A, Flower Road, Colombo 07',
         contactEmail: 'contact@dentalign.com',
         contactPhone: '0112 345 678',
         bookingFee: 500,
-        enableNotifications: true
+        enableNotifications: true,
+        enableEmailInvoicing: false
     });
 
-    const SidebarItem = ({ to, icon, label, active = false }) => (
-        <Link to={to} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-            <span className="text-lg">{icon}</span>
-            <span className="font-semibold text-sm">{label}</span>
-        </Link>
-    );
+    const toggleNotification = (key) => {
+        setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex font-inter">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-20">
-                <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-center gap-2 text-blue-600"> DA 🦷 <span className="text-xl font-bold tracking-tight text-gray-900">DentAlign</span></div>
-                </div>
-                <nav className="flex-1 p-4 space-y-1">
-                    <SidebarItem to="/admin/dashboard" icon="📊" label="Dashboard" />
-                    <SidebarItem to="/admin/reports" icon="📈" label="Reports & Analytics" />
-                    <SidebarItem to="/admin/balance" icon="💰" label="Financial Overview" />
-                    <SidebarItem to="/admin/users" icon="👥" label="User Management" />
-                    <SidebarItem to="/admin/settings" icon="⚙️" label="Settings" active />
-                </nav>
-            </aside>
+        <div className="min-h-screen bg-gray-50 font-sans pb-20 md:pb-12">
+            <Navbar />
 
-            <main className="flex-1 ml-64 p-8">
-                <header className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-                    <p className="text-gray-500 text-sm mt-1">Configure global clinic parameters and notification logic.</p>
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+                <header className="mb-8 sm:mb-12">
+                    <div className="space-y-2">
+                        <Link to="/admin/dashboard" className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 mb-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                            Back to Dashboard
+                        </Link>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Clinic Settings</h1>
+                        <p className="text-sm sm:text-base text-gray-500 max-w-xl">Configure basic clinic info, booking fees, and automated notifications.</p>
+                    </div>
                 </header>
 
-                <div className="max-w-3xl space-y-8">
-                    {/* Clinic Info */}
-                    <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
-                        <h2 className="text-xl font-black text-[#111827]">Clinic Profile</h2>
-                        <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-6 sm:space-y-8">
+                    {/* Clinic Information */}
+                    <section className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">Clinic Information</h2>
+                                <p className="text-sm text-gray-500 font-medium">Basic details about your clinic branch</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Clinic Name</label>
-                                <input type="text" value={settings.clinicName} readOnly className="w-full bg-gray-50 p-4 rounded-xl font-bold text-gray-900 outline-none" />
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Clinic Name</label>
+                                <input
+                                    type="text"
+                                    value={settings.clinicName}
+                                    readOnly
+                                    className="w-full bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 outline-none"
+                                />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Booking Fee (Rs.)</label>
-                                <input type="number" value={settings.bookingFee} readOnly className="w-full bg-gray-50 p-4 rounded-xl font-bold text-gray-900 outline-none" />
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Booking Fee (Rs.)</label>
+                                <input
+                                    type="number"
+                                    value={settings.bookingFee}
+                                    readOnly
+                                    className="w-full bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 outline-none"
+                                />
                             </div>
-                            <div className="col-span-2 space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Address</label>
-                                <input type="text" value={settings.clinicAddress} readOnly className="w-full bg-gray-50 p-4 rounded-xl font-bold text-gray-900 outline-none" />
+                            <div className="sm:col-span-2 space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Clinic Address</label>
+                                <input
+                                    type="text"
+                                    value={settings.clinicAddress}
+                                    readOnly
+                                    className="w-full bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-end">
+                            <button className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">Edit Profile Info</button>
+                        </div>
+                    </section>
+
+                    {/* Notifications */}
+                    <section className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">Notification Settings</h2>
+                                <p className="text-sm text-gray-500 font-medium">Manage automated clinic communications</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 transition-colors">
+                                <div className="space-y-0.5">
+                                    <div className="text-sm font-bold text-gray-900">SMS Reminders</div>
+                                    <div className="text-xs text-gray-500 font-medium">Send automated reminders 24h before appointments</div>
+                                </div>
+                                <button
+                                    onClick={() => toggleNotification('enableNotifications')}
+                                    className={`w-11 h-6 rounded-full relative transition-colors ${settings.enableNotifications ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${settings.enableNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 transition-colors">
+                                <div className="space-y-0.5">
+                                    <div className="text-sm font-bold text-gray-900">Email Invoicing</div>
+                                    <div className="text-xs text-gray-500 font-medium">Automatically email receipts to patients after checkout</div>
+                                </div>
+                                <button
+                                    onClick={() => toggleNotification('enableEmailInvoicing')}
+                                    className={`w-11 h-6 rounded-full relative transition-colors ${settings.enableEmailInvoicing ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${settings.enableEmailInvoicing ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                                </button>
                             </div>
                         </div>
                     </section>
 
-                    {/* Automation */}
-                    <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
-                        <h2 className="text-xl font-black text-[#111827]">Notification Configuration</h2>
-                        <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl">
-                            <div>
-                                <div className="text-sm font-bold text-[#111827]">Automated SMS Reminders</div>
-                                <div className="text-xs text-blue-600 font-bold">Sends alerts 24h before appointment</div>
-                            </div>
-                            <div className="w-12 h-6 bg-blue-600 rounded-full relative">
-                                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                            <div>
-                                <div className="text-sm font-bold text-[#111827]">Email Invoicing</div>
-                                <div className="text-xs text-gray-400 font-bold">Auto-send PDF to patient on checkout</div>
-                            </div>
-                            <div className="w-12 h-6 bg-gray-200 rounded-full relative">
-                                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                            </div>
-                        </div>
-                    </section>
+                    <div className="pt-4 flex justify-end">
+                        <button className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm transition-colors active:scale-95">
+                            Update Settings
+                        </button>
+                    </div>
                 </div>
             </main>
         </div>

@@ -11,6 +11,11 @@ const appointmentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    branch: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Branch',
+        required: true
+    },
     date: {
         type: Date,
         required: true
@@ -21,7 +26,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+        enum: ['pending', 'confirmed', 'in-treatment', 'completed', 'cancelled'],
         default: 'pending'
     },
     reason: {

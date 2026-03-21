@@ -21,10 +21,7 @@ const RegisterPage = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
@@ -43,16 +40,12 @@ const RegisterPage = () => {
                 specialization: activeRole === 'dentist' ? formData.specialization : undefined
             });
 
-            // Save user data/token
             localStorage.setItem('userInfo', JSON.stringify(response.data));
 
             if (response.data.role === 'patient' && response.data.patientId) {
-                alert(`Registration Successful! 🎉\n\nYour Patient ID is: ${response.data.patientId}\n\nPlease save this ID. You can use it to login instead of email.`);
-            } else {
-                alert('Registration Successful! Redirecting...');
+                alert(`Registration Successful!\n\nYour Patient ID is: ${response.data.patientId}\n\nPlease save this ID for your records.`);
             }
 
-            // Redirect based on role
             setTimeout(() => {
                 if (response.data.role === 'patient') navigate('/patient/dashboard');
                 else if (response.data.role === 'dentist') navigate('/dentist/dashboard');
@@ -60,8 +53,7 @@ const RegisterPage = () => {
             }, 1000);
 
         } catch (err) {
-            console.error('Registration Error:', err);
-            setError(err.response?.data?.message || err.message || 'Connection failed. Is the server running?');
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -72,146 +64,169 @@ const RegisterPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-4 font-inter">
-            {/* Reduced Height to 500px (-20 amount) and reduced Width to 900px */}
-            <div className="bg-white w-full max-w-[900px] h-[500px] rounded-[24px] shadow-2xl flex overflow-hidden">
-
-                {/* Left Column - 40% Width (Slightly narrower/reduced) */}
-                <div className="w-[40%] bg-[#007AFF] relative flex flex-col p-5 text-white text-center items-center justify-between">
-                    {/* Grid Pattern */}
-                    <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none"></div>
-
-                    {/* Branding Section */}
-                    <div className="relative z-10 flex flex-col items-center gap-3 mt-3">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                <path d="m9 12 2 2 4-4" />
-                            </svg>
-                        </div>
-                        <h1 className="text-2xl font-bold tracking-tight">DentAlign</h1>
-                    </div>
-
-                    {/* Image Card - Exact Wireframe Match */}
-                    <div className="relative z-10 w-full max-w-[240px] h-[180px] rounded-2xl overflow-hidden border-[3px] border-white/20 shadow-xl group">
-                        <img
-                            src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=500"
-                            alt="Clinic"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-[#007AFF]/20"></div>
-                        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#007AFF] to-transparent"></div>
-
-                        <div className="absolute bottom-3 left-0 right-0 px-2 text-center">
-                            <p className="text-white font-bold text-sm drop-shadow-md">
-                                State-of-the-art Dental Cares
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+                
+                {/* Left Side - Blue Branding */}
+                <div className="w-full md:w-5/12 bg-blue-600 p-6 sm:p-8 text-white flex flex-col justify-between hidden md:flex relative overflow-hidden">
+                    <div className="relative z-10">
+                        <Link to="/" className="inline-flex items-center gap-2 mb-8 hover:opacity-90 transition-opacity">
+                            <span className="text-xl">🦷</span>
+                            <span className="font-bold tracking-tight uppercase text-xs">DentAlign Clinic</span>
+                        </Link>
+                        
+                        <div className="space-y-2">
+                            <h1 className="text-xl lg:text-2xl font-bold leading-tight">
+                                Create Your Account
+                            </h1>
+                            <p className="text-xs text-blue-100 leading-relaxed">
+                                Join our clinic system to manage your appointments, view treatment records, and connect with dental professionals.
                             </p>
                         </div>
                     </div>
 
-                    {/* Footer Text */}
+                    {/* Decorative Image Container */}
+                    <div className="mt-6 relative z-10 w-full h-32 rounded-lg overflow-hidden border border-blue-400/30 shadow-inner">
+                        <img 
+                            src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=600&auto=format&fit=crop" 
+                            alt="Modern Dental Clinic" 
+                            className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-500"
+                        />
+                        <div className="absolute inset-0 bg-blue-600/20 mix-blend-multiply pointer-events-none"></div>
+                    </div>
 
+                    {/* Background decorations */}
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20 blur-2xl"></div>
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-800/20 rounded-full -ml-20 -mb-20 blur-2xl"></div>
+
+                    <div className="mt-6 pt-4 border-t border-blue-500/50 relative z-10">
+                        <p className="text-[11px] text-blue-100 mb-2">Already registered with us?</p>
+                        <Link to="/login" className="inline-flex w-full items-center justify-center py-1.5 px-4 bg-white text-blue-600 hover:bg-blue-50 rounded-md font-medium transition-colors text-[13px]">
+                            Sign In to Portal
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Right Column - 60% Width */}
-                <div className="w-[60%] flex flex-col justify-center h-full relative">
-                    {/* Form Layout */}
-                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                        <div className="max-w-[340px] mx-auto w-full pt-1">
-                            <div className="mb-4 text-center">
-                                <h2 className="text-2xl font-bold text-[#111827]">Create Account</h2>
-                                <p className="text-[#6B7280] text-xs mt-1">
-                                    Already a member? <Link to="/login" className="text-[#007AFF] font-bold hover:underline">Log in</Link>
-                                </p>
+                {/* Right Side - Form */}
+                <div className="w-full md:w-7/12 p-6 sm:p-8 bg-white flex flex-col justify-center">
+                    <div className="max-w-sm mx-auto w-full">
+                        {/* Mobile Logo (Visible only on small screens) */}
+                        <div className="md:hidden pb-6 mb-6 border-b border-gray-100">
+                             <Link to="/" className="inline-flex items-center gap-2">
+                                <span className="text-xl">🦷</span>
+                                <span className="font-bold tracking-tight uppercase text-sm text-blue-600">DentAlign Clinic</span>
+                            </Link>
+                        </div>
+
+                        <header className="mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Register</h2>
+                            <p className="text-[11px] text-gray-500 mt-0.5">Please fill in your details to create an account.</p>
+                        </header>
+
+                        {/* Role Switcher */}
+                        <div className="bg-gray-100 p-1 rounded-md flex mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setActiveRole('patient')}
+                                className={`flex-1 py-1 text-[11px] font-semibold rounded transition-colors ${activeRole === 'patient' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                            >
+                                Patient
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveRole('dentist')}
+                                className={`flex-1 py-1 text-[11px] font-semibold rounded transition-colors ${activeRole === 'dentist' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                            >
+                                Dentist
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-3">
+                            {error && (
+                                <div className="p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-[11px] font-medium">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Full Name</label>
+                                <input
+                                    type="text" name="fullName" value={formData.fullName} onChange={handleInputChange}
+                                    className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm"
+                                    placeholder={activeRole === 'dentist' ? "Dr. Full Name" : "John Doe"} required
+                                />
                             </div>
 
-                            <div className="bg-[#F3F4F6] p-1 rounded-lg flex w-full mb-4">
-                                <button onClick={() => setActiveRole('patient')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${activeRole === 'patient' ? 'bg-white text-[#007AFF] shadow-sm' : 'text-[#6B7280]'}`}>Patient</button>
-                                <button onClick={() => setActiveRole('dentist')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${activeRole === 'dentist' ? 'bg-white text-[#007AFF] shadow-sm' : 'text-[#6B7280]'}`}>Dentist</button>
+                            {activeRole === 'dentist' && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">SLMC Number</label>
+                                        <input type="text" name="slmcNumber" value={formData.slmcNumber} onChange={handleInputChange} className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm" placeholder="SLMC-XXXX" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Specialization</label>
+                                        <div className="relative">
+                                            <select name="specialization" value={formData.specialization} onChange={handleInputChange} className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm appearance-none" required>
+                                                <option value="">Select</option>
+                                                {specializations.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                                            </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-gray-500">
+                                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Email Address</label>
+                                <input
+                                    type="email" name="email" value={formData.email} onChange={handleInputChange}
+                                    className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm"
+                                    placeholder="email@example.com"
+                                />
                             </div>
 
-                            <form className="space-y-2.5" onSubmit={handleSubmit}>
-                                {error && (
-                                    <div className="bg-red-50 text-red-600 text-[10px] font-bold p-2 rounded-lg border border-red-100 animate-fadeIn">
-                                        {error}
-                                    </div>
-                                )}
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Phone Number</label>
+                                <input
+                                    type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
+                                    className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm"
+                                    placeholder="077 XXX XXXX" required
+                                />
+                            </div>
 
-                                {activeRole === 'patient' && (
-                                    <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100 mb-1 flex justify-between items-center">
-                                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wide">New Patient ID</span>
-                                        <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">Auto-generated</span>
-                                    </div>
-                                )}
-
-                                <div className="relative group h-10">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9CA3AF] group-focus-within:text-[#007AFF] transition-colors">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                    </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Password</label>
+                                <div className="relative">
                                     <input
-                                        type="text"
-                                        name="fullName"
-                                        value={formData.fullName}
-                                        onChange={handleInputChange}
-                                        className="w-full h-full bg-white border border-[#E5E7EB] rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none transition-all placeholder:text-[#9CA3AF]/60 text-xs font-medium text-[#111827]"
-                                        placeholder={activeRole === 'dentist' ? "Full Name (Dr.)" : "Full Name"}
+                                        type={showPassword ? 'text' : 'password'}
+                                        name="password" value={formData.password} onChange={handleInputChange}
+                                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white outline-none transition-colors text-sm pr-10"
+                                        placeholder="••••••••" required
                                     />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1">
+                                        {showPassword ? (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                        ) : (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        )}
+                                    </button>
                                 </div>
+                            </div>
 
-                                {activeRole === 'dentist' && (
-                                    <div className="grid grid-cols-2 gap-3 animate-fadeIn">
-                                        <input type="text" name="slmcNumber" value={formData.slmcNumber} onChange={handleInputChange} className="w-full h-10 bg-white border border-[#E5E7EB] rounded-xl px-3 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none text-xs font-medium text-[#111827]" placeholder="SLMC No." />
-                                        <select name="specialization" value={formData.specialization} onChange={handleInputChange} className="w-full h-10 bg-white border border-[#E5E7EB] rounded-xl px-2 focus:ring-2 focus:ring-[#007AFF] outline-none text-xs font-medium text-[#111827] appearance-none"><option value="">Spec...</option>{specializations.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                                    </div>
-                                )}
-
-                                <div className="relative group h-10">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9CA3AF] group-focus-within:text-[#007AFF] transition-colors">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-                                    </div>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        className="w-full h-full bg-white border border-[#E5E7EB] rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none transition-all placeholder:text-[#9CA3AF]/60 text-xs font-medium text-[#111827]"
-                                        placeholder="Email Address"
-                                    />
-                                </div>
-
-                                <div className="relative group h-10">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="text-[10px] font-bold text-[#9CA3AF] group-focus-within:text-[#007AFF] border-r border-[#E5E7EB] pr-2 mr-2">+94</span>
-                                    </div>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleInputChange}
-                                        className="w-full h-full bg-white border border-[#E5E7EB] rounded-xl pl-[3.5rem] pr-4 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none transition-all placeholder:text-[#9CA3AF]/60 text-xs font-medium text-[#111827]"
-                                        placeholder="7X XXX XXXX"
-                                    />
-                                </div>
-
-                                <div className="relative group h-10">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9CA3AF] group-focus-within:text-[#007AFF] transition-colors">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                                    </div>
-                                    <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} className="w-full h-full bg-white border border-[#E5E7EB] rounded-xl pl-10 pr-10 focus:ring-2 focus:ring-[#007AFF] focus:border-transparent outline-none transition-all placeholder:text-[#9CA3AF]/60 text-xs font-medium text-[#111827]" placeholder="Password" />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#007AFF] transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`w-full bg-[#007AFF] hover:bg-[#0066D6] text-white font-bold py-2.5 rounded-xl shadow-lg shadow-[#007AFF]/20 active:scale-[0.98] transition-all text-sm mt-1 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                >
-                                    {loading ? 'Registering...' : 'Register Account'}
-                                </button>
-                            </form>
-
-                            <p className="text-[10px] text-center text-[#9CA3AF] mt-3">
-                                By registering, you agree to our <a href="#" className="underline hover:text-[#007AFF]">Terms</a>.
+                            <button
+                                type="submit" disabled={loading}
+                                className="w-full py-1.5 mt-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex justify-center items-center gap-2 text-sm"
+                            >
+                                {loading ? 'Processing...' : 'Create Account'}
+                            </button>
+                        </form>
+                        
+                        {/* Mobile Sign In Link */}
+                        <div className="md:hidden mt-5 pt-4 border-t border-gray-100 text-center">
+                            <p className="text-[11px] text-gray-600">
+                                Already registered? <Link to="/login" className="text-blue-600 font-bold hover:text-blue-800 transition-colors">Sign In</Link>
                             </p>
                         </div>
                     </div>

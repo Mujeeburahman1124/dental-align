@@ -17,8 +17,12 @@ const userSchema = new mongoose.Schema({
     patientId: {
         type: String,
         unique: true,
-        sparse: true,
+        sparse: true, // Allow others not to have it, but those who do must be unique
         trim: true
+    },
+
+    age: {
+        type: Number
     },
     phone: {
         type: String,
@@ -30,7 +34,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['patient', 'dentist', 'staff', 'admin'],
+        enum: ['patient', 'dentist', 'staff', 'admin', 'guest'],
         default: 'patient'
     },
     // Dentist Specific Fields
@@ -42,9 +46,21 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: function () { return this.role === 'dentist'; }
     },
+    medicalHistory: {
+        type: [String],
+        default: []
+    },
+    allergies: {
+        type: [String],
+        default: []
+    },
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    blocked: {
+        type: Boolean,
+        default: false
     }
 });
 

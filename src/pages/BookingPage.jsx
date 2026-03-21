@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
@@ -10,124 +10,123 @@ const BookingPage = () => {
 
     const [formData, setFormData] = useState({
         patientName: user?.fullName || '',
-        patientEmail: user?.email || '',
+        patientAge: user?.age || '',
         patientPhone: user?.phone || '',
+        patientEmail: user?.email || '',
         date: '',
         time: '',
         service: '',
         dentist: '',
-        notes: ''
+        branch: '',
+        notes: '',
+        preferredPayment: 'Cash'
     });
 
     const [loading, setLoading] = useState(false);
+    const [branches, setBranches] = useState([]);
+    const [dentists, setDentists] = useState([]);
+    const [timeSlots, setTimeSlots] = useState([
+        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+        '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
+    ]);
 
     const services = [
         'General Checkup', 'Teeth Cleaning', 'Teeth Whitening', 'Cavity Filling',
         'Root Canal', 'Tooth Extraction', 'Dental Implant', 'Orthodontics', 'Emergency Care'
     ];
 
-    const [dentists, setDentists] = useState([]);
-    const [timeSlots, setTimeSlots] = useState([
-        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-        '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'
-    ]); // Default fallback
-
-    React.useEffect(() => {
-        const fetchSettings = async () => {
+    useEffect(() => {
+        const fetchInitial = async () => {
             try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/settings`);
-                if (data.timeSlots && data.timeSlots.length > 0) {
-                    setTimeSlots(data.timeSlots);
+                const [settingsRes, branchRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/settings`),
+                    axios.get(`${API_BASE_URL}/api/branches`)
+                ]);
+                if (settingsRes.data.timeSlots?.length > 0) setTimeSlots(settingsRes.data.timeSlots);
+                setBranches(branchRes.data);
+                if (branchRes.data.length > 0) {
+                    setFormData(prev => ({ ...prev, branch: branchRes.data[0]._id }));
                 }
-            } catch (error) {
-                console.error('Error fetching settings:', error);
-            }
+            } catch (err) { console.error('Fetch error:', err); }
         };
-
-        const fetchDentists = async () => {
-            try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/users/dentists`);
-                setDentists(data);
-            } catch (error) {
-                console.error('Error fetching dentists:', error);
-            }
-        };
-
-        fetchSettings();
-        fetchDentists();
+        fetchInitial();
     }, []);
 
+    useEffect(() => {
+        const fetchDentists = async () => {
+            try {
+                if (formData.branch) {
+                    const { data } = await axios.get(`${API_BASE_URL}/api/schedules/available-dentists`, {
+                        params: { branchId: formData.branch, date: formData.date }
+                    });
+                    setDentists(data);
+                } else {
+                    const { data } = await axios.get(`${API_BASE_URL}/api/users/dentists`);
+                    setDentists(data);
+                }
+            } catch (err) { console.error('Dentist fetch error:', err); }
+        };
+        fetchDentists();
+    }, [formData.branch, formData.date]);
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Guest booking allowed
-        // if (!user) { ... } removed
-
-        if (!formData.date || !formData.time || !formData.service) {
+        if (!formData.date || !formData.time || !formData.service || (!user && !formData.patientName)) {
             alert('Please fill in all required fields');
             return;
         }
 
         setLoading(true);
         try {
-            // Handle "Any available" dentist selection
             let selectedDentistId = formData.dentist;
-
             if (!selectedDentistId && dentists.length > 0) {
-                const randomIndex = Math.floor(Math.random() * dentists.length);
-                selectedDentistId = dentists[randomIndex]._id;
+                selectedDentistId = dentists[Math.floor(Math.random() * dentists.length)]._id;
             }
 
             if (!selectedDentistId) {
-                alert('No dentists available at the moment. Please try again later.');
+                alert('No dentists available. Please try another date or branch.');
                 setLoading(false);
                 return;
             }
 
-            let response;
-
-            // Authenticated Booking
-            if (user) {
-                const config = {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${user.token}`
-                    }
-                };
-                response = await axios.post(`${API_BASE_URL}/api/appointments`, {
+            if (user && user.role === 'patient') {
+                const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                await axios.post(`${API_BASE_URL}/api/appointments`, {
                     date: formData.date,
                     time: formData.time,
                     reason: formData.service,
                     dentistId: selectedDentistId,
+                    branchId: formData.branch,
                     notes: formData.notes,
-                    // status handled by backend
+                    patientAge: formData.patientAge,
+                    paymentPreference: formData.preferredPayment
                 }, config);
-
-                alert('Appointment booked successfully! 🎉\nYou can view it in your dashboard.');
+                alert('Appointment booked successfully! 🎉 Email confirmation sent.');
                 navigate('/patient/dashboard');
-            }
-            // Guest / Public Booking
-            else {
-                response = await axios.post(`${API_BASE_URL}/api/appointments/public`, {
+            } else {
+                const response = await axios.post(`${API_BASE_URL}/api/appointments/public`, {
                     patientName: formData.patientName,
-                    patientEmail: formData.patientEmail || undefined,
+                    patientAge: formData.patientAge,
                     patientPhone: formData.patientPhone,
+                    patientEmail: formData.patientEmail,
                     date: formData.date,
                     time: formData.time,
                     reason: formData.service,
                     dentist: selectedDentistId,
-                    notes: formData.notes
+                    branchId: formData.branch,
+                    notes: formData.notes,
+                    paymentPreference: formData.preferredPayment
                 });
 
                 const pId = response.data.appointment?.patient?.patientId || "Generated";
-                alert(`Appointment Request Sent! 🎉\n\nYour Patient ID is: ${pId}\n\nPlease save this ID. You can use it to login and check your status.`);
+                alert(`Appointment Request Sent!\n\nYour Patient ID is: ${pId}\n\nPlease save this ID for your records.`);
                 navigate('/login');
             }
-
         } catch (error) {
             console.error('Booking error:', error);
             alert(error.response?.data?.message || 'Failed to book appointment');
@@ -139,209 +138,151 @@ const BookingPage = () => {
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 font-inter">
+        <div className="min-h-screen bg-gray-50 font-sans pb-12 text-gray-900">
             <Navbar />
 
-            <div className="max-w-3xl mx-auto px-4 py-6 md:py-10">
-                {/* Header - Compact */}
-                <div className="text-center mb-6">
-                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">Book Appointment</h1>
-                    <p className="text-sm text-gray-600">Fill in the details to schedule your visit</p>
-                </div>
+            <main className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+                <header className="mb-8 px-2">
+                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 text-[10px] font-bold uppercase tracking-wider mb-2">
+                        Online Booking
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Schedule Your Visit</h1>
+                    <p className="text-xs text-gray-500 mt-1.5 max-w-lg">Secure your slot with our specialist dentists in just a few clicks.</p>
+                </header>
 
-                {/* Booking Form - Compact */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-4 md:p-6 space-y-5">
-
-                    {/* Patient Information */}
-                    <div className="space-y-3">
-                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">1</span>
-                            Patient Info
-                        </h2>
-
-                        {!user && (
-                            <div className="bg-blue-50 p-2.5 rounded-xl border border-blue-100 mb-2 mt-2 flex justify-between items-center">
-                                <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wide">New Patient ID</span>
-                                <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded border border-blue-100 shadow-sm">Auto-generated</span>
-                            </div>
+                <div className="bg-white p-6 sm:p-10 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Patient Information - Only shown for guests/unlogged */}
+                        {(!user || user.role === 'guest') && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-5">
+                                    <div className="w-1.5 h-4 bg-blue-600 rounded-full"></div>
+                                    <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Patient Details</h2>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Full Name</label>
+                                        <input
+                                            name="patientName" value={formData.patientName} onChange={handleChange}
+                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
+                                            placeholder="John Doe" required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Age</label>
+                                        <input
+                                            type="number" name="patientAge" value={formData.patientAge} onChange={handleChange}
+                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
+                                            placeholder="e.g. 25" required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Phone Number</label>
+                                        <input
+                                            name="patientPhone" value={formData.patientPhone} onChange={handleChange}
+                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
+                                            placeholder="07X XXX XXXX" required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Email Address</label>
+                                        <input
+                                            name="patientEmail" value={formData.patientEmail} onChange={handleChange}
+                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium"
+                                            placeholder="name@example.com" required
+                                        />
+                                    </div>
+                                </div>
+                            </section>
                         )}
 
-                        <div className="grid md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Full Name *</label>
-                                <input
-                                    type="text"
-                                    name="patientName"
-                                    value={formData.patientName}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                                    placeholder="Your name"
-                                />
+                        {/* Appointment Configuration */}
+                        <section>
+                            <div className="flex items-center gap-2 mb-5">
+                                <div className="w-1.5 h-4 bg-emerald-600 rounded-full"></div>
+                                <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Appointment Setup</h2>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Email (Optional)</label>
-                                <input
-                                    type="email"
-                                    name="patientEmail"
-                                    value={formData.patientEmail}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                                    placeholder="your@email.com"
-                                />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2 space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Branch Selection</label>
+                                    <select name="branch" value={formData.branch} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold">
+                                        {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Clinical Service</label>
+                                    <select name="service" value={formData.service} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold" required>
+                                        <option value="">Select Service</option>
+                                        {services.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Preferred Doctor</label>
+                                    <select name="dentist" value={formData.dentist} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold">
+                                        <option value="">Any Available Specialist</option>
+                                        {dentists.map(d => <option key={d._id} value={d._id}>Dr. {d.fullName}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Requested Date</label>
+                                    <input type="date" min={today} name="date" value={formData.date} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold" required />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">Preferred Time</label>
+                                    <select name="time" value={formData.time} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold" required>
+                                        <option value="">Pick a Slot</option>
+                                        {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                        </section>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Phone *</label>
-                            <input
-                                type="tel"
-                                name="patientPhone"
-                                value={formData.patientPhone}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                                placeholder="0771234567"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Appointment Details */}
-                    <div className="space-y-3 pt-3 border-t border-gray-100">
-                        <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black">2</span>
-                            Appointment Details
-                        </h2>
-
-                        <div className="grid md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Date *</label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    value={formData.date}
-                                    onChange={handleChange}
-                                    min={today}
-                                    required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                                />
+                        {/* Payment Method */}
+                        <section>
+                            <div className="flex items-center gap-2 mb-5">
+                                <div className="w-1.5 h-4 bg-gray-900 rounded-full"></div>
+                                <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Payment Preference</h2>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">Time *</label>
-                                <select
-                                    name="time"
-                                    value={formData.time}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                                >
-                                    <option value="">Choose time</option>
-                                    {timeSlots.map(slot => (
-                                        <option key={slot} value={slot}>{slot}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Service *</label>
-                            <select
-                                name="service"
-                                value={formData.service}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                            >
-                                <option value="">Select service</option>
-                                {services.map(service => (
-                                    <option key={service} value={service}>{service}</option>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                {[
+                                    { id: 'Card Payment', icon: '💳' },
+                                    { id: 'Online Payment', icon: '📱' },
+                                    { id: 'Direct Payment', icon: '🏦' }
+                                ].map(opt => (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, preferredPayment: opt.id }))}
+                                        className={`p-3.5 rounded-xl border flex items-center justify-center gap-3 transition-all ${formData.preferredPayment === opt.id ? 'bg-gray-900 border-gray-900 text-white shadow-md' : 'bg-gray-50 border-gray-50 text-gray-400 hover:border-gray-200'}`}
+                                    >
+                                        <span className="text-lg">{opt.icon}</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider">{opt.id}</span>
+                                    </button>
                                 ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Dentist (Optional)</label>
-                            <select
-                                name="dentist"
-                                value={formData.dentist}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-                            >
-                                <option value="">Any available</option>
-                                {dentists.map(dentist => (
-                                    <option key={dentist._id} value={dentist._id}>{dentist.fullName}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5">Notes (Optional)</label>
-                            <textarea
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleChange}
-                                rows="2"
-                                className="w-full px-3 py-2.5 text-sm rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none resize-none"
-                                placeholder="Any concerns..."
-                            ></textarea>
-                        </div>
-                    </div>
-
-                    {/* Summary - Compact */}
-                    {formData.date && formData.time && formData.service && (
-                        <div className="bg-blue-50 rounded-xl p-4 space-y-2">
-                            <h3 className="font-bold text-sm text-gray-900">Summary</h3>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <span className="text-gray-600">Date:</span>
-                                    <div className="font-bold text-gray-900">{new Date(formData.date).toLocaleDateString()}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Time:</span>
-                                    <div className="font-bold text-gray-900">{formData.time}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Service:</span>
-                                    <div className="font-bold text-gray-900">{formData.service}</div>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Fee:</span>
-                                    <div className="font-bold text-blue-600">Rs. 500</div>
-                                </div>
                             </div>
+                        </section>
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 text-white py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]"
+                            >
+                                {loading ? 'Wait...' : 'Book Now'}
+                            </button>
+                            <p className="mt-4 text-[10px] text-gray-400 text-center font-medium">
+                                * Cancellations must be made 24 hours in advance.
+                            </p>
                         </div>
-                    )}
-
-                    {/* Buttons - Compact */}
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={() => navigate(-1)}
-                            className="flex-1 px-4 py-3 text-sm bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 px-4 py-3 text-sm bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Booking...
-                                </>
-                            ) : (
-                                'Confirm Booking'
-                            )}
-                        </button>
-                    </div>
-
-                    <p className="text-xs text-gray-500 text-center">
-                        Booking fee: Rs. 500. Payment after confirmation.
-                    </p>
-                </form>
-            </div>
+                    </form>
+                </div>
+            </main>
         </div>
     );
 };

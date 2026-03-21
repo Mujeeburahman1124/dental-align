@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Appointment from '../models/Appointment.js';
 
 // @desc    Get all users with role 'dentist'
 // @route   GET /api/users/dentists
@@ -30,11 +31,28 @@ export const getPatients = async (req, res) => {
             }
             : {};
 
-        const patients = await User.find({ ...keyword, role: 'patient' })
-            .select('-password') // Exclude password
-            .sort({ fullName: 1 });
+        const patients = await User.find({ 
+            ...keyword, 
+            role: { $in: ['patient', 'guest'] } 
+        })
+            .select('-password')
+            .sort({ fullName: 1 })
+            .lean();
 
-        res.json(patients);
+        // Attach last visit date for each patient
+        const patientsWithLastVisit = await Promise.all(patients.map(async (patient) => {
+            const lastAppt = await Appointment.findOne({
+                patient: patient._id,
+                status: 'completed'
+            }).sort({ date: -1 });
+
+            return {
+                ...patient,
+                lastVisit: lastAppt ? lastAppt.date : null
+            };
+        }));
+
+        res.json(patientsWithLastVisit);
     } catch (error) {
         console.error('Get Patients Error:', error);
         res.status(500).json({ message: 'Server Error' });
@@ -84,6 +102,9 @@ export const updateUserProfile = async (req, res) => {
             user.fullName = req.body.fullName || user.fullName;
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
+            user.age = req.body.age || user.age;
+            user.medicalHistory = req.body.medicalHistory || user.medicalHistory;
+            user.allergies = req.body.allergies || user.allergies;
 
             if (req.body.password) {
                 user.password = req.body.password;
@@ -100,9 +121,12 @@ export const updateUserProfile = async (req, res) => {
             res.json({
                 _id: updatedUser._id,
                 fullName: updatedUser.fullName,
+                age: updatedUser.age,
                 email: updatedUser.email,
                 phone: updatedUser.phone,
                 role: updatedUser.role,
+                medicalHistory: updatedUser.medicalHistory,
+                allergies: updatedUser.allergies,
                 slmcNumber: updatedUser.slmcNumber,
                 specialization: updatedUser.specialization,
             });
@@ -112,5 +136,64 @@ export const updateUserProfile = async (req, res) => {
     } catch (error) {
         console.error('Update Profile Error:', error);
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+export const getUserProfile = async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        res.json({
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            age: user.age,
+            role: user.role,
+            patientId: user.patientId,
+            medicalHistory: user.medicalHistory,
+            allergies: user.allergies,
+            slmcNumber: user.slmcNumber,
+            specialization: user.specialization
+        });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+};
+// @desc    Update patient profile by Staff/Admin
+// @route   PUT /api/users/:id
+// @access  Private/Staff
+export const updatePatientByStaff = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (user) {
+            user.fullName = req.body.fullName || user.fullName;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone || user.phone;
+            user.age = req.body.age || user.age;
+            user.medicalHistory = req.body.medicalHistory || user.medicalHistory;
+            user.blocked = req.body.blocked !== undefined ? req.body.blocked : user.blocked;
+
+            const updatedUser = await user.save();
+
+            res.json({
+                _id: updatedUser._id,
+                fullName: updatedUser.fullName,
+                age: updatedUser.age,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                role: updatedUser.role,
+                blocked: updatedUser.blocked
+            });
+        } else {
+            res.status(404).json({ message: 'Patient document not found' });
+        }
+    } catch (error) {
+        console.error('Staff Update Error:', error);
+        res.status(500).json({ message: 'Server Protocol Error' });
     }
 };

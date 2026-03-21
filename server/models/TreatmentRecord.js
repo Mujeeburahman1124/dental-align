@@ -11,6 +11,11 @@ const treatmentRecordSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    branch: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Branch'
+        // NOT required — dentist may not have an active appointment
+    },
     title: {
         type: String,
         required: true
@@ -34,6 +39,10 @@ const treatmentRecordSchema = new mongoose.Schema({
         default: Date.now
     },
     cost: {
+        type: Number,
+        default: 0
+    },
+    doctorFee: {
         type: Number,
         default: 0
     },

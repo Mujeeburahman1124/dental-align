@@ -1,0 +1,60 @@
+﻿[dotenv@17.2.3] injecting env (4) from server\.env -- tip: ≡ƒùé∩╕Å backup and recover secrets: https://dotenvx.com/ops
+{
+  "results": [
+    {
+      "name": "Mohamed Rizwan",
+      "role": "patient",
+      "count": 94,
+      "id": "69842044e04fa496fd55d3d3"
+    },
+    {
+      "name": "Salha",
+      "role": "patient",
+      "count": 94,
+      "id": "698423bc9191d9e036606fda"
+    },
+    {
+      "name": "fathima",
+      "role": "patient",
+      "count": 93,
+      "id": "698590c0e55adee17b791c14"
+    },
+    {
+      "name": "Fathima Aqeela",
+      "role": "patient",
+      "count": 105,
+      "id": "69877084e647461f4dbf19d1"
+    },
+    {
+      "name": "Sara",
+      "role": "patient",
+      "count": 94,
+      "id": "6987f25dde649227545910a3"
+    },
+    {
+      "name": "Fathima",
+      "role": "patient",
+      "count": 97,
+      "id": "6988313f4b0f27519521e4c5"
+    },
+    {
+      "name": "MR. Fathima Aqeela",
+      "role": "guest",
+      "count": 43,
+      "id": "698f3dd54807ce90491be1e3"
+    },
+    {
+      "name": "fathi",
+      "role": "patient",
+      "count": 90,
+      "id": "69913c16d09bbd5f7565b8b4"
+    }
+  ],
+  "salha": {
+    "name": "Salha",
+    "role": "patient",
+    "id": "698423bc9191d9e036606fda",
+    "treatments": 94
+  },
+  "total": 710
+}

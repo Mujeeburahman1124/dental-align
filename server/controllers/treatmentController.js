@@ -1,5 +1,6 @@
 import TreatmentRecord from '../models/TreatmentRecord.js';
 import User from '../models/User.js';
+import Appointment from '../models/Appointment.js';
 import { createNotification } from './notificationController.js';
 
 // @desc    Create a new treatment record
@@ -7,7 +8,7 @@ import { createNotification } from './notificationController.js';
 // @access  Private (Dentist)
 export const createTreatment = async (req, res) => {
     try {
-        const { patientId, title, procedures, notes, prescriptions, cost, paid } = req.body;
+        const { patientId, dentistId, title, procedures, notes, prescriptions, cost, paid } = req.body;
 
         if (!patientId || !title) {
             return res.status(400).json({ message: 'Patient and Title are required' });
@@ -22,24 +23,44 @@ export const createTreatment = async (req, res) => {
             proceduresArray = procedures;
         }
 
+        const parsedCost = Number(cost) || 0;
+        const computedDoctorFee = parsedCost * 0.40; // 40% of treatment cost is reserved as doctor payout
+
+        // Automatically find branch from appointment if not provided
+        let branchId = req.body.branchId;
+        if (!branchId) {
+            const activeAppt = await Appointment.findOne({
+                patient: patientId,
+                dentist: dentistId || req.user._id,
+                status: { $in: ['in-treatment', 'confirmed'] }
+            });
+            if (activeAppt) branchId = activeAppt.branch;
+        }
+
         const treatment = await TreatmentRecord.create({
             patient: patientId,
-            dentist: req.user._id,
+            dentist: dentistId || req.user._id,
+            branch: branchId, // Save branch
             title,
             procedures: proceduresArray,
             notes,
             prescriptions, // keeping as string
-            cost: cost || 0,
+            cost: parsedCost,
+            doctorFee: computedDoctorFee,
             paid: paid || false,
             date: new Date()
         });
 
-        // Trigger notification
-        await createNotification(
-            patientId,
-            'treatment',
-            `A new treatment record for ${title} has been added to your profile by Dr. ${req.user.fullName}.`,
-            treatment._id
+        // Automatically mark today's in-treatment/confirmed appointment as completed
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        await Appointment.findOneAndUpdate(
+            {
+                patient: patientId,
+                dentist: dentistId || req.user._id,
+                status: { $in: ['in-treatment', 'confirmed'] }
+            },
+            { status: 'completed' }
         );
 
         res.status(201).json(treatment);
@@ -105,19 +126,53 @@ export const getTreatmentSummary = async (req, res) => {
     }
 };
 
-// @desc    Get all clinic treatments (Admin/Staff)
-// @route   GET /api/treatments/all
-// @access  Private (Admin/Staff)
 export const getAllTreatments = async (req, res) => {
     try {
         const treatments = await TreatmentRecord.find({})
             .populate('patient', 'fullName email')
             .populate('dentist', 'fullName')
+            .populate('branch', 'name')
             .sort({ date: -1 });
 
         res.json(treatments);
     } catch (error) {
         console.error('Get All Treatments Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get treatments for a specific dentist
+// @route   GET /api/treatments/dentist/:dentistId
+// @access  Private (Dentist/Admin)
+export const getDentistTreatments = async (req, res) => {
+    try {
+        const { dentistId } = req.params;
+        const treatments = await TreatmentRecord.find({ dentist: dentistId })
+            .populate('patient', 'fullName email')
+            .sort({ date: -1 });
+        res.json(treatments);
+    } catch (error) {
+        console.error('Get Dentist Treatments Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+// @desc    Mark a treatment as paid (Staff/Admin)
+// @route   PATCH /api/treatments/:id/pay
+// @access  Private (Admin/Staff/Dentist)
+export const markTreatmentPaid = async (req, res) => {
+    try {
+        const { paymentMethod } = req.body;
+        const treatment = await TreatmentRecord.findByIdAndUpdate(
+            req.params.id,
+            { paid: true, paymentMethod: paymentMethod || 'Cash' },
+            { new: true }
+        ).populate('patient', 'fullName').populate('dentist', 'fullName');
+
+        if (!treatment) return res.status(404).json({ message: 'Treatment not found' });
+
+        res.json(treatment);
+    } catch (error) {
+        console.error('Mark Paid Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
