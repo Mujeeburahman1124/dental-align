@@ -60,7 +60,7 @@
   }
 
   body {
-    @apply font-sans antialiased text-slate-900 bg-mesh selection:bg-primary-100 selection:text-primary-900;
+    @apply font-sans antialiased text-slate-900 bg-mesh selection:bg-primary-100 selection:text-primary-900 overflow-x-hidden;
     scroll-behavior: smooth;
   }
 

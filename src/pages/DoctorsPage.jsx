@@ -41,15 +41,46 @@ const getBio = (doc) => {
 };
 
 const DoctorsPage = () => {
+    const user = JSON.parse(localStorage.getItem('userInfo')) || {};
+    const isAdmin = user.role === 'admin';
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingDoc, setEditingDoc] = useState(null);
+    const [editForm, setEditForm] = useState({ fullName: '', specialization: '', bio: '', profilePicture: '' });
 
-    useEffect(() => {
+    const fetchDoctors = () => {
+        setLoading(true);
         axios.get(`${API_BASE_URL}/api/users/dentists`)
             .then(({ data }) => setDoctors(data))
             .catch(console.error)
             .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchDoctors();
     }, []);
+
+    const handleEdit = (doc) => {
+        setEditingDoc(doc);
+        setEditForm({
+            fullName: doc.fullName,
+            specialization: doc.specialization || '',
+            bio: doc.bio || '',
+            profilePicture: doc.profilePicture || ''
+        });
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await axios.put(`${API_BASE_URL}/api/users/admin/${editingDoc._id}`, editForm, config);
+            setEditingDoc(null);
+            fetchDoctors();
+        } catch (err) {
+            alert('Failed to update doctor profile');
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-12 text-gray-900">
@@ -75,12 +106,6 @@ const DoctorsPage = () => {
                             <div key={i} className="bg-white rounded-2xl border border-gray-200 h-96 shadow-sm"></div>
                         ))}
                     </div>
-                ) : doctors.length === 0 ? (
-                    <div className="text-center py-24 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                        <div className="text-4xl mb-4 text-gray-300">🦷</div>
-                        <h3 className="text-lg font-bold text-gray-900">No doctors found</h3>
-                        <p className="text-gray-500 mt-2">Our team list is currently being updated.</p>
-                    </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                         {doctors.map((doc, index) => {
@@ -90,33 +115,41 @@ const DoctorsPage = () => {
                             const imgSrc = doc.profilePicture || pool[(idHash + index) % pool.length];
 
                             return (
-                                <div key={doc._id} className="bg-white rounded-xl overflow-hidden border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/20 group flex flex-col h-full">
-                                    <div className="relative aspect-square overflow-hidden bg-slate-50">
+                                <div key={doc._id} className="bg-white rounded p-1 border border-slate-200 shadow-sm transition-all hover:shadow-xl hover:border-blue-400 group flex flex-col h-full relative">
+                                    {isAdmin && (
+                                        <button 
+                                            onClick={() => handleEdit(doc)}
+                                            className="absolute top-2 right-2 z-20 bg-blue-600 text-white p-2 rounded shadow-lg hover:bg-blue-700 transition-colors active:scale-95"
+                                        >
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                    )}
+                                    <div className="relative aspect-[4/5] overflow-hidden bg-slate-100 rounded-sm">
                                         <img
                                             src={imgSrc}
                                             alt={doc.fullName}
-                                            className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                                         />
-                                        <div className="absolute top-3 left-3">
-                                            <span className="bg-white/80 backdrop-blur-md text-blue-700 text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 shadow-sm">
-                                                {doc.specialization?.split(' ')[0] || 'Dentist'}
+                                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900/80 to-transparent">
+                                            <span className="text-[9px] font-black text-white/90 uppercase tracking-widest bg-blue-600/60 px-2 py-0.5 rounded backdrop-blur-sm">
+                                                {doc.specialization || 'Clinical Faculty'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                                        <div>
-                                            <h3 className="text-base font-bold text-slate-900 tracking-tight leading-none mb-1">Dr. {doc.fullName}</h3>
-                                            <p className="text-[11px] text-slate-400 font-medium italic line-clamp-2">
-                                                {getBio(doc)}
+                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase mb-1">{doc.fullName.toLowerCase().startsWith('dr.') ? '' : 'Dr. '}{doc.fullName}</h3>
+                                            <p className="text-[10px] text-slate-500 font-medium leading-relaxed line-clamp-3">
+                                                {doc.bio || getBio(doc)}
                                             </p>
                                         </div>
 
                                         <Link
                                             to="/booking"
-                                            className="w-full py-2.5 bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all text-center block active:scale-95"
+                                            className="w-full py-2.5 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-blue-600 transition-all text-center block"
                                         >
-                                            Consultation
+                                            Book Consultation
                                         </Link>
                                     </div>
                                 </div>
@@ -125,6 +158,63 @@ const DoctorsPage = () => {
                     </div>
                 )}
             </main>
+
+            {/* Edit Modal */}
+            {editingDoc && (
+                <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                            <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Edit Provider Profile</h2>
+                            <button onClick={() => setEditingDoc(null)} className="text-slate-400 hover:text-slate-900">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleSave} className="p-6 space-y-4 text-left">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Full Clinical Name</label>
+                                <input 
+                                    type="text" 
+                                    value={editForm.fullName}
+                                    onChange={e => setEditForm({...editForm, fullName: e.target.value})}
+                                    className="w-full bg-slate-50 border border-slate-200 p-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white rounded transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Primary Specialization</label>
+                                <input 
+                                    type="text" 
+                                    value={editForm.specialization}
+                                    onChange={e => setEditForm({...editForm, specialization: e.target.value})}
+                                    className="w-full bg-slate-50 border border-slate-200 p-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white rounded transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Provider Image URL</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="https://..."
+                                    value={editForm.profilePicture}
+                                    onChange={e => setEditForm({...editForm, profilePicture: e.target.value})}
+                                    className="w-full bg-slate-50 border border-slate-200 p-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white rounded transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Clinical Biography</label>
+                                <textarea 
+                                    rows="3"
+                                    value={editForm.bio}
+                                    onChange={e => setEditForm({...editForm, bio: e.target.value})}
+                                    className="w-full bg-slate-50 border border-slate-200 p-2.5 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white rounded transition-all resize-none"
+                                />
+                            </div>
+                            <div className="pt-2 flex gap-3">
+                                <button type="button" onClick={() => setEditingDoc(null)} className="flex-1 py-3 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest rounded hover:bg-slate-200 transition-all">Cancel</button>
+                                <button type="submit" className="flex-[2] py-3 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Update Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Careers Section - Simpler */}
             <section className="container max-w-5xl mx-auto px-4 mb-20">

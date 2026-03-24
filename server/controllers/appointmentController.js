@@ -509,6 +509,7 @@ export const updateAppointment = async (req, res) => {
         if (req.body.notes !== undefined) appointment.notes = req.body.notes;
         if (req.body.time !== undefined) appointment.time = req.body.time;
         if (req.body.date !== undefined) appointment.date = req.body.date;
+        if (req.body.isFeePaid !== undefined) appointment.isFeePaid = req.body.isFeePaid;
 
         const updated = await appointment.save();
         await updated.populate('patient', 'fullName phone email patientId');

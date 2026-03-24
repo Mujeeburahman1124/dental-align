@@ -1,0 +1,15 @@
+﻿6b407e5 Finalized reports and salaries (removed secrets from history)
+39ce197 fix: robust patient id generation to prevent duplicates
+50161ea fix: total patient stats and duplicate patient id generation
+c9bb114 chore: update notification text to SMS in staff booking
+825d6ce feat: enable SMS notifications for appointments
+0e31fe5 fix: add missing state variables to StaffBookAppointment
+a42f1ba feat: enable guest booking with auto-id generation
+757fd11 feat: show auto-generated patient ID cues in register and booking forms
+a94449d feat: implement Patient ID login and fix staff appointments URL
+ebb0580 fix: correct API URL syntax in Patient Dashboard
+28af540 fix: fetch real dentists and fix booking payload
+7e81aa1 docs: add wireframes and UI overview
+ce0f3bb fix: restore missing Link import in DentistDashboard
+41825cc style: remove promotional text from register page
+5b629ae feat: add clinic schedules

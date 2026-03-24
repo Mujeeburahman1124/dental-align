@@ -192,10 +192,10 @@ const DentistTreatmentRecord = () => {
                 {!selectedPatient ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {error && (
-                            <div className="col-span-full mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-4">
-                                <span className="text-xl">⚠️</span>
-                                <p className="text-sm font-bold">{error}</p>
-                                <button onClick={() => window.location.reload()} className="ml-auto text-xs font-extrabold uppercase bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors">Retry</button>
+                            <div className="col-span-full mb-6 p-4 bg-red-50 border border-red-200 rounded flex items-center gap-3 text-red-700">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                <p className="text-xs font-bold uppercase tracking-wider">{error}</p>
+                                <button onClick={() => window.location.reload()} className="ml-auto text-[10px] font-bold uppercase bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded transition-colors">Retry</button>
                             </div>
                         )}
                         {loading ? (
@@ -303,25 +303,25 @@ const DentistTreatmentRecord = () => {
                             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                                 <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
                                     <div>
-                                        <h2 className="text-base font-bold text-gray-900">Treatment History</h2>
-                                        <p className="text-xs text-gray-500 font-medium">Historical logs and clinical procedure data</p>
+                                        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Treatment History</h2>
+                                        <p className="text-xs text-gray-500 font-medium mt-0.5">Historical logs and clinical procedure data</p>
                                     </div>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-2.5 py-1 rounded border border-gray-100">{treatments.length} Records</span>
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-gray-50 px-2.5 py-1 rounded border border-gray-200">{treatments.length > 10 ? 'LATEST 10 OF ' + treatments.length : treatments.length} RECORDS</span>
                                 </div>
 
                                 <div className="divide-y divide-gray-100">
                                     {treatments.length > 0 ? (
-                                        treatments.map((t) => (
-                                            <div key={t._id} className="p-6 sm:p-8 hover:bg-gray-50 transition-colors">
+                                        treatments.slice(0, 10).map((t) => (
+                                            <div key={t._id} className="p-5 sm:p-6 hover:bg-gray-50 transition-colors">
                                                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                                                     <div className="space-y-1">
                                                         <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
                                                             {new Date(t.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                                         </div>
-                                                        <h4 className="text-xl font-bold text-gray-900">{t.title}</h4>
+                                                        <h4 className="text-lg font-bold text-gray-900 tracking-tight">{t.title}</h4>
                                                     </div>
                                                     <div className="flex flex-col sm:items-end gap-2">
-                                                        <div className="text-lg font-bold text-gray-900">Rs. {t.cost.toLocaleString()}</div>
+                                                        <div className="text-base font-bold text-gray-900">Rs. {t.cost.toLocaleString()}</div>
                                                         {t.paid ? (
                                                             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-50 text-green-700 border border-green-100">Paid</span>
                                                         ) : (
@@ -344,27 +344,32 @@ const DentistTreatmentRecord = () => {
 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     {t.prescriptions && (
-                                                        <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center gap-3">
-                                                            <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded flex items-center justify-center text-sm">💊</div>
+                                                        <div className="p-3 bg-white border border-gray-200 rounded flex items-center gap-3 shadow-sm">
+                                                            <div className="w-8 h-8 bg-blue-50 text-blue-600 border border-blue-100 rounded flex items-center justify-center text-sm">
+                                                                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10.5 20.5l-6-6a4.24 4.24 0 0 1 6-6l6 6a4.24 4.24 0 0 1-6 6z"></path><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line></svg>
+                                                            </div>
                                                             <div className="min-w-0">
                                                                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Prescriptions</div>
-                                                                <div className="text-xs font-bold text-gray-900 truncate">{t.prescriptions}</div>
+                                                                <div className="text-xs font-bold text-gray-900 truncate mt-0.5">{t.prescriptions}</div>
                                                             </div>
                                                         </div>
                                                     )}
                                                     {t.attachments && t.attachments.length > 0 && (
-                                                        <a href={t.attachments[0].url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 border border-gray-900 bg-gray-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-black transition-colors">
-                                                            <span>📄</span> View Medical Scan
+                                                        <a href={t.attachments[0].url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 bg-gray-50 border border-gray-200 text-gray-700 hover:text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors shadow-sm">
+                                                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                                            View Medical Scan
                                                         </a>
                                                     )}
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-24 text-center">
-                                            <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 text-2xl">📂</div>
-                                            <h3 className="font-bold text-gray-900">No records found</h3>
-                                            <p className="text-sm text-gray-500 mt-1">This patient has no treatment history recorded yet.</p>
+                                        <div className="py-20 text-center">
+                                            <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded flex items-center justify-center mx-auto mb-4 border border-gray-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z"></path></svg>
+                                            </div>
+                                            <h3 className="text-sm font-bold text-gray-900 uppercase">No records found</h3>
+                                            <p className="text-xs text-gray-500 mt-1 font-medium">This patient has no treatment history recorded yet.</p>
                                         </div>
                                     )}
                                 </div>
@@ -377,84 +382,85 @@ const DentistTreatmentRecord = () => {
             {/* New Record Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-2xl relative z-10 flex flex-col max-h-[90vh]">
+                        <div className="px-5 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">New Treatment Record</h3>
-                                <p className="text-sm text-gray-500 mt-1">Adding entry for {selectedPatient?.fullName}</p>
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">New Treatment Record</h3>
+                                <p className="text-xs font-medium text-gray-500 mt-0.5">Adding entry for {selectedPatient?.fullName}</p>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-2">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-                            <form onSubmit={handleSaveRecord} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700">Treatment Title <span className="text-red-500">*</span></label>
+                        <div className="p-5 overflow-y-auto">
+                            <form onSubmit={handleSaveRecord} className="space-y-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Treatment Title <span className="text-red-500">*</span></label>
                                         <input
                                             type="text" required value={newRecord.title}
                                             onChange={e => setNewRecord({ ...newRecord, title: e.target.value })}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                            className="w-full px-3 py-2.5 rounded bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-semibold text-gray-900 shadow-sm"
                                             placeholder="e.g. Scaling & Polishing"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-semibold text-gray-700">Cost (Rs.) <span className="text-red-500">*</span></label>
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cost (Rs.) <span className="text-red-500">*</span></label>
                                         <input
                                             type="number" required value={newRecord.cost}
                                             onChange={e => setNewRecord({ ...newRecord, cost: e.target.value })}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                            className="w-full px-3 py-2.5 rounded bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-semibold text-gray-900 shadow-sm"
                                             placeholder="5000"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-gray-700">Procedures <span className="text-gray-400 font-normal">(comma separated)</span></label>
+                                <div className="space-y-1.5">
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Procedures <span className="text-gray-400 font-medium">(comma separated)</span></label>
                                     <input
                                         type="text" value={newRecord.procedures}
                                         onChange={e => setNewRecord({ ...newRecord, procedures: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                        className="w-full px-3 py-2.5 rounded bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-semibold text-gray-900 shadow-sm"
                                         placeholder="Scaling, Polishing, Fluoride Application"
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-gray-700">Clinical Notes <span className="text-red-500">*</span></label>
+                                <div className="space-y-1.5">
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Clinical Notes <span className="text-red-500">*</span></label>
                                     <textarea
                                         rows={4} required value={newRecord.notes}
                                         onChange={e => setNewRecord({ ...newRecord, notes: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none"
+                                        className="w-full px-3 py-2.5 rounded bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-medium text-gray-900 shadow-sm resize-none leading-relaxed"
                                         placeholder="Enter detailed treatment observations..."
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-gray-700">Prescriptions</label>
+                                <div className="space-y-1.5">
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Prescriptions</label>
                                     <input
                                         type="text" value={newRecord.prescriptions}
                                         onChange={e => setNewRecord({ ...newRecord, prescriptions: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                        className="w-full px-3 py-2.5 rounded bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-semibold text-gray-900 shadow-sm"
                                         placeholder="Paracetamol 500mg, etc."
                                     />
                                 </div>
 
-                                <div className="flex gap-4 pt-6">
+                                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="flex-1 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors"
+                                        className="w-full sm:w-1/3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors shadow-sm"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-sm transition-colors"
+                                        className="w-full sm:w-2/3 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-sm"
                                     >
-                                        Save Dental Record
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                        Save Record
                                     </button>
                                 </div>
                             </form>

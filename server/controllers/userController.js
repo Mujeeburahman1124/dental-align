@@ -114,7 +114,9 @@ export const updateUserProfile = async (req, res) => {
             if (user.role === 'dentist') {
                 user.slmcNumber = req.body.slmcNumber || user.slmcNumber;
                 user.specialization = req.body.specialization || user.specialization;
+                user.bio = req.body.bio || user.bio;
             }
+            user.profilePicture = req.body.profilePicture || user.profilePicture;
 
             const updatedUser = await user.save();
 
@@ -129,6 +131,8 @@ export const updateUserProfile = async (req, res) => {
                 allergies: updatedUser.allergies,
                 slmcNumber: updatedUser.slmcNumber,
                 specialization: updatedUser.specialization,
+                profilePicture: updatedUser.profilePicture,
+                bio: updatedUser.bio,
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -157,7 +161,9 @@ export const getUserProfile = async (req, res) => {
             medicalHistory: user.medicalHistory,
             allergies: user.allergies,
             slmcNumber: user.slmcNumber,
-            specialization: user.specialization
+            specialization: user.specialization,
+            profilePicture: user.profilePicture,
+            bio: user.bio
         });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -194,6 +200,36 @@ export const updatePatientByStaff = async (req, res) => {
         }
     } catch (error) {
         console.error('Staff Update Error:', error);
+        res.status(500).json({ message: 'Server Protocol Error' });
+    }
+};
+
+// @desc    Update any user (Admin only)
+// @route   PUT /api/users/admin/:id
+// @access  Private/Admin
+export const updateUserByAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.fullName = req.body.fullName || user.fullName;
+        user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
+        user.age = req.body.age || user.age;
+        user.role = req.body.role || user.role;
+        user.profilePicture = req.body.profilePicture !== undefined ? req.body.profilePicture : user.profilePicture;
+        user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
+        user.specialization = req.body.specialization || user.specialization;
+        user.slmcNumber = req.body.slmcNumber || user.slmcNumber;
+
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Admin Update Error:', error);
         res.status(500).json({ message: 'Server Protocol Error' });
     }
 };

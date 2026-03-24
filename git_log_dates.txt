@@ -1,0 +1,29 @@
+﻿commit 6b407e51d8e5d7838389a21fbc90e23e20695d4f
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   35 hours ago
+
+    Finalized reports and salaries (removed secrets from history)
+
+commit 39ce197465c0d4d93f7c01db3ff9c957514fac66
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   6 weeks ago
+
+    fix: robust patient id generation to prevent duplicates
+
+commit 50161ea95eddf8de7fb54f6238bb019c37ded54c
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   6 weeks ago
+
+    fix: total patient stats and duplicate patient id generation
+
+commit c9bb1147fd3be7e7621be16287bee1862258a487
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   6 weeks ago
+
+    chore: update notification text to SMS in staff booking
+
+commit 825d6ce8004140cf53d60022cec6b48029d8c9ff
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   6 weeks ago
+
+    feat: enable SMS notifications for appointments

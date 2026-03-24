@@ -62,19 +62,24 @@ export const googleLogin = async (req, res) => {
         const { email, name, picture, uid } = decodedToken;
 
         // Check if user exists
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
-            // Create new GUEST user (Google Login = Guest Access)
-            const patientId = await generateUniqueId('guest');
+            // Create new patient (Google Registration = Patient with P-ID)
+            const patientId = await generateUniqueId('patient');
             user = await User.create({
                 fullName: name,
-                email: email,
-                password: Math.random().toString(36).slice(-8), // Dummy password
-                role: 'guest',
+                email: email.toLowerCase().trim(),
+                password: Math.random().toString(36).slice(-10), // Dummy random password
+                role: 'patient',
                 patientId,
+                profilePicture: picture,
                 phone: 'Not provided'
             });
+        } else if (user.role === 'patient' && !user.patientId) {
+            // If user exists but doesn't have a patientId, generate one
+            user.patientId = await generateUniqueId('patient');
+            await user.save();
         }
 
         res.json({
@@ -83,6 +88,7 @@ export const googleLogin = async (req, res) => {
             patientId: user.patientId,
             email: user.email,
             role: user.role,
+            phone: user.phone,
             medicalHistory: user.medicalHistory,
             allergies: user.allergies,
             token: generateToken(user._id),
@@ -114,27 +120,10 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'Dentists must provide SLMC Number and Specialization' });
         }
 
-<<<<<<< HEAD
-        // Generate Unique ID
-        const patientId = await generateUniqueId(role || 'patient');
-=======
-        // Generate Patient ID if role is patient
         let patientId = undefined;
         if (!role || role === 'patient') {
-            // Find the last created patient WHO HAS a patientId
-            const lastPatient = await User.findOne({
-                role: 'patient',
-                patientId: { $exists: true, $ne: null }
-            }).sort({ createdAt: -1 });
-
-            if (lastPatient && lastPatient.patientId) {
-                const lastIdNum = parseInt(lastPatient.patientId.split('-')[1]);
-                patientId = `P-${lastIdNum + 1}`;
-            } else {
-                patientId = 'P-1001';
-            }
+            patientId = await generateUniqueId('patient');
         }
->>>>>>> 62be0195fba92df2a013b37f7abfabafa0405c62
 
         // Create user
         const user = await User.create({

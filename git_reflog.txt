@@ -1,0 +1,20 @@
+﻿6b407e5 HEAD@{0}: commit: Finalized reports and salaries (removed secrets from history)
+39ce197 HEAD@{1}: reset: moving to HEAD~2
+d7e308f HEAD@{2}: commit (merge): Resolved merge conflicts and finalized reports
+22fc6a9 HEAD@{3}: commit: Refined Reports, built responsive Salary page, and added Export functionality
+39ce197 HEAD@{4}: commit: fix: robust patient id generation to prevent duplicates
+50161ea HEAD@{5}: commit: fix: total patient stats and duplicate patient id generation
+c9bb114 HEAD@{6}: commit: chore: update notification text to SMS in staff booking
+825d6ce HEAD@{7}: commit: feat: enable SMS notifications for appointments
+0e31fe5 HEAD@{8}: commit: fix: add missing state variables to StaffBookAppointment
+a42f1ba HEAD@{9}: commit: feat: enable guest booking with auto-id generation
+757fd11 HEAD@{10}: commit: feat: show auto-generated patient ID cues in register and booking forms
+a94449d HEAD@{11}: commit: feat: implement Patient ID login and fix staff appointments URL
+ebb0580 HEAD@{12}: commit: fix: correct API URL syntax in Patient Dashboard
+28af540 HEAD@{13}: commit: fix: fetch real dentists and fix booking payload
+7e81aa1 HEAD@{14}: commit: docs: add wireframes and UI overview
+ce0f3bb HEAD@{15}: commit: fix: restore missing Link import in DentistDashboard
+41825cc HEAD@{16}: commit: style: remove promotional text from register page
+5b629ae HEAD@{17}: commit: feat: add clinic schedules
+5259f13 HEAD@{18}: commit: feat: login success feedback
+c7395ab HEAD@{19}: commit: feat: enable network access

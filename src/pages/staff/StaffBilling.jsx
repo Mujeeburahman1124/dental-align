@@ -139,71 +139,82 @@ const StaffBilling = () => {
         <div className="min-h-screen bg-slate-50 font-sans pb-12">
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-6">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+                <header className="mb-12 border-b border-slate-200 pb-10 flex flex-col lg:flex-row justify-between lg:items-end gap-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Billing & Revenue</h1>
-                        <p className="text-sm text-slate-500">Track collections and pending patient invoices.</p>
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 text-[10px] font-bold uppercase tracking-widest mb-4">
+                            <span className="w-1 h-1 bg-blue-600 rounded-full animate-pulse"></span>
+                            Financial Ledger
+                        </div>
+                        <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-slate-900 leading-none">
+                            Revenue <span className="text-blue-600">Operations</span>
+                        </h1>
+                        <p className="mt-4 text-sm font-medium text-slate-500 max-w-xl italic opacity-80">
+                            Centralized collection tracking for clinical procedures and institutional booking fees.
+                        </p>
                     </div>
 
-                    <div className="flex gap-4">
-                        <div className="bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pending Collected</p>
-                            <p className="text-lg font-bold text-slate-900">Rs. {stats.pendingAmount.toLocaleString()}</p>
+                    <div className="grid grid-cols-2 gap-4 lg:min-w-[400px]">
+                        <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Outstanding</p>
+                            <p className="text-xl font-black text-orange-600 tracking-tighter">Rs. {stats.pendingAmount.toLocaleString()}</p>
                         </div>
-                        <div className="bg-white px-5 py-3 rounded-xl border border-slate-200 shadow-sm">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Collected</p>
-                            <p className="text-lg font-bold text-slate-900">Rs. {stats.collected.toLocaleString()}</p>
+                        <div className="bg-white p-5 rounded border border-slate-200 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Collected Total</p>
+                            <p className="text-xl font-black text-emerald-600 tracking-tighter">Rs. {stats.collected.toLocaleString()}</p>
                         </div>
                     </div>
                 </header>
 
-                <div className="flex bg-white p-1 rounded-lg w-full sm:w-fit mb-8 border border-slate-200 shadow-sm">
+                <div className="flex bg-slate-100 p-1.5 rounded-lg w-full sm:w-fit mb-12 border border-slate-200">
                     {['pending', 'completed', 'all'].map(k => (
                         <button
                             key={k}
                             onClick={() => setFilter(k)}
-                            className={`px-5 py-2 text-xs font-bold uppercase tracking-widest rounded-md transition-all ${filter === k ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`px-8 py-2.5 text-[10px] font-black uppercase tracking-widest rounded transition-all ${filter === k ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-50'}`}
                         >
-                            {k === 'pending' ? `Pending (${stats.count})` : k}
+                            {k === 'pending' ? `Outstanding (${stats.count})` : k}
                         </button>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredInvoices.length > 0 ? filteredInvoices.map(inv => (
-                        <div key={inv._id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-blue-300 transition-all group">
+                        <div key={inv._id} className="bg-white rounded border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-blue-500 hover:shadow-xl transition-all group relative">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-100 group-hover:text-blue-600 transition-opacity">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M7 7h10M7 12h10M7 17h10"></path></svg>
+                            </div>
                             <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-600 border border-slate-200 uppercase">
-                                        {inv.patient?.fullName?.[0] || 'P'}
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded border border-slate-100 flex items-center justify-center font-black text-[10px] tracking-tighter">
+                                        ID-{inv._id.slice(-4).toUpperCase()}
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${inv.paid ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
-                                        {inv.paid ? 'Paid' : 'Unpaid'}
+                                    <span className={`px-2.5 py-1 rounded text-[8px] font-black uppercase tracking-widest border ${inv.paid ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                        {inv.paid ? 'Settled' : 'Unpaid'}
                                     </span>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-900 truncate tracking-tight">{inv.patient?.fullName || 'Walk-in'}</h3>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Ref: {inv._id.slice(-6).toUpperCase()}</p>
+                                <h3 className="text-sm font-black text-slate-900 truncate tracking-tight uppercase mb-1">{inv.patient?.fullName || 'Walk-in Registry'}</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Date: {new Date(inv.date).toLocaleDateString()}</p>
                                 
-                                <div className="mt-4 pt-4 border-t border-slate-50 space-y-2">
-                                    <p className="text-xs font-semibold text-slate-700 line-clamp-1">{inv.title}</p>
-                                    <p className="text-[10px] text-slate-500">{new Date(inv.date).toLocaleDateString()}</p>
+                                <div className="mt-6 pt-6 border-t border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1.5 opacity-80">{inv.title}</p>
+                                    <p className="text-[9px] text-slate-500 italic font-medium leading-relaxed">{inv.type === 'treatment' ? 'Clinical Procedure Fee' : 'Faculty Appointment Deposit'}</p>
                                 </div>
                             </div>
 
-                            <div className="mt-6 flex items-center justify-between">
+                            <div className="mt-8 flex items-end justify-between">
                                 <div>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Amount</p>
-                                    <p className="text-base font-bold text-slate-900">Rs. {inv.cost.toLocaleString()}</p>
+                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1">Amount Due</p>
+                                    <p className="text-xl font-black text-slate-900 tracking-tighter">Rs. {inv.cost.toLocaleString()}</p>
                                 </div>
                                 {inv.paid ? (
-                                    <button onClick={() => handlePrint(inv)} className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest group">
-                                        Receipt <span className="group-hover:ml-1 transition-all">→</span>
+                                    <button onClick={() => handlePrint(inv)} className="bg-slate-50 text-slate-900 px-4 py-2 rounded border border-slate-200 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all">
+                                        Receipt
                                     </button>
                                 ) : (
                                     <button
                                         onClick={() => setShowPaymentModal({ show: true, invoiceId: inv._id, amount: inv.cost, title: inv.title, type: inv.type })}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 shadow-sm active:scale-95"
+                                        className="bg-blue-600 text-white px-6 py-3 rounded text-[9px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
                                     >
                                         Settle
                                     </button>
@@ -211,7 +222,13 @@ const StaffBilling = () => {
                             </div>
                         </div>
                     )) : (
-                        <div className="col-span-full py-20 text-center bg-white border border-slate-200 rounded-xl text-slate-400 text-sm">No records found.</div>
+                        <div className="col-span-full py-32 text-center bg-white border border-slate-200 border-dashed rounded opacity-60">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                                <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.407 2.5 1M12 8V7m0 11v1m0-1c-1.11 0-2.08-.407-2.5-1M12 18v1m4-18H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"></path></svg>
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Clinical Ledger Empty</h3>
+                            <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-widest">No financial records detected for the selected filter.</p>
+                        </div>
                     )}
                 </div>
             </main>

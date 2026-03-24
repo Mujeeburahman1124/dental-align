@@ -4,43 +4,43 @@ import { Link } from 'react-router-dom';
 
 const packages = [
     {
-        name: 'Basic Checkup',
+        name: 'Initial Clinical Assessment',
         price: 'Rs. 2,500',
-        per: 'per visit',
+        per: 'Per Consultation',
         popular: false,
         features: [
-            'Full Dental Consultation',
-            'Professional Scaling & Polishing',
-            'Comprehensive Oral Assessment',
-            'Personalized Hygiene Report',
+            'Full Digital Oral Mapping',
+            'Professional Prophylaxis',
+            'Comprehensive Diagnostic Report',
+            'Treatment Plan Roadmap',
         ],
-        icon: '🦷',
+        icon: <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"></path></svg>,
     },
     {
-        name: 'Premium Whitening',
+        name: 'Advanced Aesthetic Whitening',
         price: 'Rs. 15,000',
-        per: 'full treatment',
+        per: 'Full Clinical Protocol',
         popular: true,
         features: [
-            'Professional Laser Whitening',
-            'Enamel Sensitivity Treatment',
-            'Deep External Stain Removal',
-            'Take-home Maintenance Kit',
+            'Precision Laser Activation',
+            'Enamel Integrity Treatment',
+            'Subsurface Stain Eradication',
+            'Home Stabilization Protocol',
         ],
-        icon: '✨',
+        icon: <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8M8 12h8"></path></svg>,
     },
     {
-        name: 'Family Wellness',
+        name: 'Multi-Patient Wellness',
         price: 'Rs. 8,500',
-        per: 'up to 4 members',
+        per: 'Up to 4 Beneficiaries',
         popular: false,
         features: [
-            'Priority Booking Access',
-            'Free Initial Consultation',
-            'Routine Health Screenings',
-            'Emergency Dental Support',
+            'Priority Specialized Access',
+            'Institutional Screening Program',
+            'Clinical Health Oversight',
+            '24/7 Faculty Support',
         ],
-        icon: '🏠',
+        icon: <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>,
     },
 ];
 
@@ -50,12 +50,16 @@ const PackagesPage = () => {
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
-                <header className="mb-16 text-center">
-                    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 mb-4">
-                        Service <span className="text-blue-600">Packages</span>
+                <header className="mb-16 text-center lg:text-left border-b border-slate-100 pb-10">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 text-[10px] font-bold uppercase tracking-widest mb-4">
+                        <span className="w-1 h-1 bg-blue-600 rounded-full animate-pulse"></span>
+                        Clinical Programs
+                    </div>
+                    <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-slate-900 leading-none">
+                        Service <span className="text-blue-600">Protocols</span>
                     </h1>
-                    <p className="text-sm text-slate-500 max-w-lg mx-auto font-medium">
-                        Choose the right dental care plan for you and your family. We offer transparent pricing and comprehensive treatments.
+                    <p className="mt-4 text-sm sm:text-base text-slate-500 max-w-xl font-medium leading-relaxed italic opacity-80">
+                        Choose the precision oral health program tailored for your clinical requirements. All protocols include digital diagnostic oversight.
                     </p>
                 </header>
 
@@ -73,13 +77,13 @@ const PackagesPage = () => {
                             )}
 
                             <div className="mb-8">
-                                <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center text-3xl mb-4 border border-slate-100 group-hover:bg-blue-50 transition-all">
+                                <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded flex items-center justify-center mb-6 border border-slate-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
                                     {pkg.icon}
                                 </div>
-                                <h2 className="text-xl font-bold text-slate-900 mb-2 truncate">{pkg.name}</h2>
+                                <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 truncate">{pkg.name}</h2>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-bold text-slate-900">{pkg.price}</span>
-                                    <span className="text-xs text-slate-400 font-medium">{pkg.per}</span>
+                                    <span className="text-2xl font-bold text-slate-900 tracking-tight">Rs. {pkg.price.replace('Rs. ', '')}</span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{pkg.per}</span>
                                 </div>
                             </div>
 
@@ -96,33 +100,38 @@ const PackagesPage = () => {
 
                             <Link
                                 to="/booking"
-                                className={`w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all text-center block shadow-sm active:scale-95
+                                className={`w-full py-3.5 rounded text-[10px] font-bold uppercase tracking-[0.2em] transition-all text-center block shadow-sm active:scale-95
                                     ${pkg.popular
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'
                                         : 'bg-slate-900 text-white hover:bg-slate-800'
                                     }`}
                             >
-                                Book Appointment
+                                Initiate Booking
                             </Link>
                         </div>
                     ))}
                 </div>
 
                 {/* Bottom Card - Corporate */}
-                <div className="mt-16 bg-white rounded-2xl p-8 md:p-12 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8 group transition-all hover:border-blue-200">
-                    <div className="flex flex-col sm:flex-row items-center gap-6 text-center md:text-left">
-                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-4xl shrink-0 shadow-inner border border-slate-100 transition-transform group-hover:scale-105">🏢</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2 leading-none">Corporate Plans</h3>
-                            <p className="text-sm text-slate-500 font-medium">We offer tailored dental benefits for local businesses and large organizations.</p>
+                <div className="mt-16 bg-slate-900 rounded p-8 md:p-12 text-white shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-3xl -mr-32 -mt-32 opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 text-center md:text-left">
+                            <div className="w-16 h-16 bg-white/10 rounded border border-white/20 flex items-center justify-center shrink-0">
+                                <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7"></path><path d="M4 21V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v17"></path></svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold mb-2 tracking-tight">Institutional Partnerships</h3>
+                                <p className="text-slate-400 text-sm font-medium italic">Tailored oral healthcare frameworks for corporate entities and medical academic faculties.</p>
+                            </div>
                         </div>
+                        <a
+                            href="mailto:partnerships@dentalign.com"
+                            className="px-10 py-5 bg-white text-slate-900 rounded font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                        >
+                            Inquire Now
+                        </a>
                     </div>
-                    <a
-                        href="tel:+94112345678"
-                        className="px-8 py-4 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-sm active:scale-95 whitespace-nowrap"
-                    >
-                        Contact Us
-                    </a>
                 </div>
             </main>
         </div>

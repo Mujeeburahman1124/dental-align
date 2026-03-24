@@ -62,6 +62,14 @@ const ReportsAnalytics = () => {
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             results = results.filter(t => new Date(t.date) >= oneWeekAgo);
+        } else if (selectedPeriod === '3month') {
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            results = results.filter(t => new Date(t.date) >= threeMonthsAgo);
+        } else if (selectedPeriod === '6month') {
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+            results = results.filter(t => new Date(t.date) >= sixMonthsAgo);
         } else if (selectedPeriod === 'year') {
             results = results.filter(t => new Date(t.date).getFullYear() === now.getFullYear());
         }
@@ -69,8 +77,9 @@ const ReportsAnalytics = () => {
         // Branch filtering
         if (selectedBranch !== 'All') {
             results = results.filter(t => {
-                const bName = t.branch?.name || t.branch;
-                return bName === selectedBranch || (t.branch?._id === selectedBranch);
+                const branchId = t.branch?._id || t.branch;
+                const branchName = t.branch?.name;
+                return branchId === selectedBranch || branchName === selectedBranch;
             });
         }
         return results;
@@ -86,6 +95,15 @@ const ReportsAnalytics = () => {
                 const total = filteredData.filter(t => new Date(t.date).getMonth() === i).reduce((acc, t) => acc + (t.cost || 0), 0);
                 data.push({ name: m, revenue: total });
             });
+        } else if (selectedPeriod === '6month' || selectedPeriod === '3month') {
+            const monthsToBack = selectedPeriod === '6month' ? 6 : 3;
+            for (let i = monthsToBack - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const mStr = d.toLocaleString('default', { month: 'short' });
+                const total = filteredData.filter(t => new Date(t.date).getMonth() === d.getMonth() && new Date(t.date).getFullYear() === d.getFullYear()).reduce((acc, t) => acc + (t.cost || 0), 0);
+                data.push({ name: mStr, revenue: total });
+            }
         } else if (selectedPeriod === 'month') {
             const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
             for (let i = 1; i <= daysInMonth; i++) {
@@ -163,6 +181,8 @@ const ReportsAnalytics = () => {
                         >
                             <option value="week">Past 7 Days</option>
                             <option value="month">Current Month</option>
+                            <option value="3month">Past 3 Months</option>
+                            <option value="6month">Past 6 Months</option>
                             <option value="year">Current Year</option>
                         </select>
                     </div>
@@ -174,7 +194,7 @@ const ReportsAnalytics = () => {
                             className="w-full bg-slate-50 border border-slate-200 p-2 text-sm font-bold uppercase outline-none focus:border-blue-500 rounded"
                         >
                             <option value="All">All Locations Combined</option>
-                            {branches.map(b => <option key={b._id} value={b.name}>{b.name}</option>)}
+                            {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                         </select>
                     </div>
                 </div>

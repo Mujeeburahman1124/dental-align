@@ -51,8 +51,8 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="text-right flex flex-col justify-center">
-                  <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest leading-none mb-1">Authenticated</p>
-                  <p className="text-sm font-bold text-white tracking-tight leading-none">{user.fullName || 'User'}</p>
+                  <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest leading-none mb-1">{user.role === 'dentist' ? 'Authenticated' : 'Patient'}</p>
+                  <p className="text-sm font-bold text-white tracking-tight leading-none uppercase">{user.role === 'dentist' ? 'Dentist' : user.fullName}</p>
                 </div>
                 <Link
                   to={`/${user.role}/dashboard`}

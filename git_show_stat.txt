@@ -1,0 +1,100 @@
+﻿commit 6b407e51d8e5d7838389a21fbc90e23e20695d4f
+Author: Mujeeburahman1124 <aqeelamrahman@gmail.com>
+Date:   Sat Mar 21 22:25:25 2026 +0530
+
+    Finalized reports and salaries (removed secrets from history)
+
+ .env                                         |    6 +
+ .gitignore                                   |    2 +
+ fix_branch_data.js                           |   43 +
+ lint_output.txt                              |  Bin 0 -> 38414 bytes
+ package-lock.json                            | 2940 +++++++++++++++++++++++++-
+ package.json                                 |   13 +-
+ preinstall.js                                |    1 +
+ public/clinic-history.png                    |  Bin 0 -> 530745 bytes
+ seed_doctors.js                              |  113 +
+ seed_full_history.js                         |   93 +
+ seed_schedules.js                            |   56 +
+ server/config/firebase.js                    |   23 +
+ server/controllers/appointmentController.js  |  235 +-
+ server/controllers/authController.js         |  122 +-
+ server/controllers/branchController.js       |   28 +
+ server/controllers/notificationController.js |   35 +
+ server/controllers/paymentController.js      |   61 +-
+ server/controllers/scheduleController.js     |  141 ++
+ server/controllers/temp_profile.js           |   21 +
+ server/controllers/treatmentController.js    |   79 +-
+ server/controllers/userController.js         |   91 +-
+ server/cronJobs.js                           |   35 +
+ server/index.js                              |   10 +-
+ server/middleware/authMiddleware.js          |   26 +-
+ server/migrate_patient_ids.js                |   51 +
+ server/models/Appointment.js                 |    7 +-
+ server/models/Branch.js                      |   19 +
+ server/models/Payment.js                     |    9 +-
+ server/models/Schedule.js                    |   41 +
+ server/models/TreatmentRecord.js             |    9 +
+ server/models/User.js                        |   20 +-
+ server/reset_db.js                           |   48 +
+ server/routes/appointments.js                |   18 +-
+ server/routes/auth.js                        |    3 +-
+ server/routes/branches.js                    |   11 +
+ server/routes/payments.js                    |    3 +-
+ server/routes/schedules.js                   |   14 +
+ server/routes/treatments.js                  |   12 +-
+ server/routes/users.js                       |    8 +-
+ server/seed.js                               |   26 +-
+ server/seedBranches.js                       |   84 +
+ server/test-registration.js                  |   33 +
+ server/verify_dentist_flow.js                |   90 +
+ src/App.jsx                                  |   18 +-
+ src/components/DentistSidebar.jsx            |   90 +
+ src/components/Navbar.jsx                    |  237 ++-
+ src/components/RestrictedPage.jsx            |   48 +
+ src/firebase.js                              |   18 +
+ src/index.css                                |  176 +-
+ src/main.jsx                                 |   76 +-
+ src/pages/BookingPage.jsx                    |  435 ++--
+ src/pages/DoctorsPage.jsx                    |  152 ++
+ src/pages/HistoryPage.jsx                    |  134 ++
+ src/pages/HomePage.jsx                       |  340 ++-
+ src/pages/PackagesPage.jsx                   |  132 ++
+ src/pages/PaymentSuccess.jsx                 |  134 ++
+ src/pages/admin/AdminBalance.jsx             |  298 ++-
+ src/pages/admin/AdminDashboard.jsx           |  269 ++-
+ src/pages/admin/AdminSchedule.jsx            |  139 +-
+ src/pages/admin/AdminSettings.jsx            |  149 +-
+ src/pages/admin/AdminStaff.jsx               |  200 ++
+ src/pages/admin/AdminUsers.jsx               |  406 ++--
+ src/pages/admin/ReportsAnalytics.jsx         |  507 +++--
+ src/pages/auth/LoginPage.jsx                 |  338 ++-
+ src/pages/auth/RegisterPage.jsx              |  275 +--
+ src/pages/dashboard/PatientDashboard.jsx     |  270 ++-
+ src/pages/dentist/DentistCalendar.jsx        |  299 ++-
+ src/pages/dentist/DentistDashboard.jsx       |  326 ++-
+ src/pages/dentist/DentistPrescriptions.jsx   |  331 +--
+ src/pages/dentist/DentistSettings.jsx        |  330 +--
+ src/pages/dentist/DentistTreatmentRecord.jsx |  621 +++---
+ src/pages/patient/BalancePage.jsx            |  204 +-
+ src/pages/patient/BillingPage.jsx            |  358 ++--
+ src/pages/patient/DigitalTreatmentRecord.jsx |  627 ++++--
+ src/pages/patient/MyAppointments.jsx         |  186 +-
+ src/pages/patient/PatientProfile.jsx         |  233 ++
+ src/pages/staff/StaffAppointments.jsx        |  607 +++++-
+ src/pages/staff/StaffBilling.jsx             |  325 +--
+ src/pages/staff/StaffBookAppointment.jsx     |  393 ++--
+ src/pages/staff/StaffDashboard.jsx           |  292 +--
+ src/pages/staff/StaffPatients.jsx            |  337 ++-
+ tmp/backdate_users.js                        |   48 +
+ tmp/check_dentists.js                        |   17 +
+ tmp/check_output.txt                         |   60 +
+ tmp/check_treatments.js                      |   30 +
+ tmp/fix_billing_visibility.js                |   74 +
+ tmp/fix_user_dates.js                        |   62 +
+ tmp/repair_db.js                             |   49 +
+ tmp/seed_debug.js                            |   55 +
+ tmp/seed_final.js                            |  109 +
+ tmp/seed_history.js                          |   96 +
+ tmp/seed_multi_branch.js                     |  133 ++
+ tmp/seed_output.txt                          |  Bin 0 -> 7818 bytes
+ 93 files changed, 12087 insertions(+), 3636 deletions(-)

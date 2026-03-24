@@ -61,6 +61,14 @@ const userSchema = new mongoose.Schema({
     blocked: {
         type: Boolean,
         default: false
+    },
+    profilePicture: {
+        type: String,
+        default: ''
+    },
+    bio: {
+        type: String,
+        default: ''
     }
 });
 

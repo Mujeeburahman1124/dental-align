@@ -144,10 +144,10 @@ const StaffAppointments = () => {
         <div className="min-h-screen bg-[#F8F9FA] font-sans selection:bg-blue-100 selection:text-blue-900 pb-20 md:pb-12 text-gray-900">
             <Navbar />
 
-            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
 
                 {/* Top Bar */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 border-b border-gray-100 pb-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 border-b border-gray-100 pb-6">
                     <div className="space-y-0.5">
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Appointment Master</h1>
                         <p className="text-sm text-gray-400 font-medium">Manage clinical schedules, patient bookings, and workflows.</p>
